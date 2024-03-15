@@ -1,18 +1,28 @@
 package main
 
 import (
-	"net/http"
-
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"github.com/mrinalwahal/boilerplate/api"
 )
 
 func main() {
 
 	e := echo.New()
-	e.GET("/", func(c echo.Context) error {
-		return c.String(http.StatusOK, "Hello, World!")
-	})
+
+	//
+	// Middlewares
+	//
+
+	//	Rate-limit requests to 10 per second.
+	e.Use(middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(5)))
+
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"*"},
+		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
+	}))
 
 	//	Register the API routes.
 	api.AddRoutes(e)
