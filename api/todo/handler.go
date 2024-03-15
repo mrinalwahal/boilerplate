@@ -34,7 +34,9 @@ func Create(c echo.Context) error {
 	service := todo.GetService(db)
 
 	//	Call the service function to execute the business logic.
-	todo, err := service.Create(ctx, payload.Title)
+	todo, err := service.Create(ctx, &todo.CreateOptions{
+		Title: payload.Title,
+	})
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "Failed to create the todo.")
 	}

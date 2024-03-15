@@ -10,7 +10,7 @@ import (
 type Base struct {
 
 	// ID is the unique identifier of the object of the model.
-	ID uuid.UUID `json:"id" gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
+	ID uuid.UUID `json:"id" gorm:"primaryKey;type:uuid"`
 
 	// CreatedAt is the time when the object was created.
 	// It is set automatically when the object is created.
@@ -24,4 +24,10 @@ type Base struct {
 	// It is set automatically when the object is marked deleted.
 	// Generally, used for soft deletes (marking records as deleted without actually removing them from the database).
 	DeletedAt gorm.DeletedAt `json:"deleted_at"`
+}
+
+// BeforeCreate hook for gorm.
+func (b *Base) BeforeCreate(tx *gorm.DB) error {
+	b.ID = uuid.New()
+	return nil
 }

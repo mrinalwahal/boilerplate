@@ -1,6 +1,13 @@
 package todo
 
+type CreateOptions struct {
+
+	//	Title of the todo.
+	Title string
+}
+
 type ListOptions struct {
+
 	//	Title of the todo.
 	Title string
 	//	Skip for pagination.

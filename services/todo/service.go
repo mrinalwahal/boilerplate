@@ -8,7 +8,7 @@ import (
 )
 
 type Service interface {
-	Create(context.Context, string) (*Todo, error)
+	Create(context.Context, *CreateOptions) (*Todo, error)
 	Get(context.Context, uuid.UUID) (*Todo, error)
 	List(context.Context, *ListOptions) ([]*Todo, error)
 	Update(context.Context, uuid.UUID, *UpdateOptions) (*Todo, error)
@@ -21,11 +21,13 @@ type service struct {
 	db *gorm.DB
 }
 
-func (s *service) Create(ctx context.Context, title string) (*Todo, error) {
-	var payload Todo
-	payload.Title = title
+func (s *service) Create(ctx context.Context, options *CreateOptions) (*Todo, error) {
+	txn := s.db.WithContext(ctx)
 
-	result := s.db.Create(&payload)
+	var payload Todo
+	payload.Title = options.Title
+
+	result := txn.Create(&payload)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -33,9 +35,11 @@ func (s *service) Create(ctx context.Context, title string) (*Todo, error) {
 }
 
 func (s *service) Get(ctx context.Context, ID uuid.UUID) (*Todo, error) {
+	txn := s.db.WithContext(ctx)
+
 	var payload Todo
 	payload.ID = ID
-	result := s.db.First(&payload)
+	result := txn.First(&payload)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -43,9 +47,11 @@ func (s *service) Get(ctx context.Context, ID uuid.UUID) (*Todo, error) {
 }
 
 func (s *service) List(ctx context.Context, options *ListOptions) ([]*Todo, error) {
+	txn := s.db.WithContext(ctx)
+
 	var payload []*Todo
 
-	query := s.db
+	query := txn
 	if options.Limit > 0 {
 		query = query.Limit(options.Limit)
 	}
@@ -68,17 +74,21 @@ func (s *service) List(ctx context.Context, options *ListOptions) ([]*Todo, erro
 }
 
 func (s *service) Update(ctx context.Context, id uuid.UUID, options *UpdateOptions) (*Todo, error) {
+	txn := s.db.WithContext(ctx)
+
 	var payload Todo
 	payload.ID = id
-	if result := s.db.Model(&payload).Updates(options); result.Error != nil {
+	if result := txn.Model(&payload).Updates(options); result.Error != nil {
 		return nil, result.Error
 	}
 	return s.Get(ctx, id)
 }
 
 func (s *service) Delete(ctx context.Context, ID uuid.UUID) error {
+	txn := s.db.WithContext(ctx)
+
 	var payload Todo
 	payload.ID = ID
-	result := s.db.Delete(&payload)
+	result := txn.Delete(&payload)
 	return result.Error
 }

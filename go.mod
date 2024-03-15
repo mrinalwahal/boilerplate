@@ -5,9 +5,9 @@ go 1.22.1
 require (
 	ariga.io/atlas-go-sdk v0.5.2
 	ariga.io/atlas-provider-gorm v0.3.1
+	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/google/uuid v1.6.0
 	github.com/labstack/echo/v4 v4.11.4
-	go.uber.org/mock v0.4.0
 	gorm.io/driver/postgres v1.5.7
 	gorm.io/gorm v1.25.7
 )
@@ -24,7 +24,7 @@ require (
 	github.com/labstack/gommon v0.4.2 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
-	github.com/mattn/go-sqlite3 v1.14.17 // indirect
+	github.com/mattn/go-sqlite3 v1.14.22 // indirect
 	github.com/microsoft/go-mssqldb v1.6.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect

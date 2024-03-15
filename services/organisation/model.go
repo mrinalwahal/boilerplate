@@ -7,6 +7,6 @@ import (
 type Organisation struct {
 	storage.Base
 
-	//	Name of the organisation.
-	Name string `json:"name"`
+	//	Title of the organisation.
+	Title string `json:"title" gorm:"not null"`
 }
