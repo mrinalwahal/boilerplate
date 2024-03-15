@@ -22,73 +22,24 @@ type service struct {
 }
 
 func (s *service) Create(ctx context.Context, options *CreateOptions) (*Todo, error) {
-	txn := s.db.WithContext(ctx)
-
-	var payload Todo
-	payload.Title = options.Title
-
-	result := txn.Create(&payload)
-	if result.Error != nil {
-		return nil, result.Error
-	}
-	return &payload, nil
+	return create(s.db.WithContext(ctx), options)
 }
 
 func (s *service) Get(ctx context.Context, ID uuid.UUID) (*Todo, error) {
-	txn := s.db.WithContext(ctx)
-
-	var payload Todo
-	payload.ID = ID
-	result := txn.First(&payload)
-	if result.Error != nil {
-		return nil, result.Error
-	}
-	return &payload, nil
+	return get(s.db.WithContext(ctx), ID)
 }
 
 func (s *service) List(ctx context.Context, options *ListOptions) ([]*Todo, error) {
-	txn := s.db.WithContext(ctx)
-
-	var payload []*Todo
-
-	query := txn
-	if options.Limit > 0 {
-		query = query.Limit(options.Limit)
-	}
-	if options.Skip > 0 {
-		query = query.Offset(options.Skip)
-	}
-	if options.OrderBy != "" {
-		query = query.Order(options.OrderBy + " " + options.OrderDirection)
-	}
-
-	//	Add conditions to the query.
-	where := Todo{
-		Title: options.Title,
-	}
-
-	if result := query.Where(&where).Find(&payload); result.Error != nil {
-		return nil, result.Error
-	}
-	return payload, nil
+	return list(s.db.WithContext(ctx), options)
 }
 
 func (s *service) Update(ctx context.Context, id uuid.UUID, options *UpdateOptions) (*Todo, error) {
-	txn := s.db.WithContext(ctx)
-
-	var payload Todo
-	payload.ID = id
-	if result := txn.Model(&payload).Updates(options); result.Error != nil {
-		return nil, result.Error
+	if err := update(s.db.WithContext(ctx), id, options); err != nil {
+		return nil, err
 	}
 	return s.Get(ctx, id)
 }
 
 func (s *service) Delete(ctx context.Context, ID uuid.UUID) error {
-	txn := s.db.WithContext(ctx)
-
-	var payload Todo
-	payload.ID = ID
-	result := txn.Delete(&payload)
-	return result.Error
+	return delete(s.db.WithContext(ctx), ID)
 }
