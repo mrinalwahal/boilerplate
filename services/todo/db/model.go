@@ -1,4 +1,4 @@
-package todo
+package db
 
 import (
 	"github.com/google/uuid"

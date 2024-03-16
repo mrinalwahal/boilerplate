@@ -1,4 +1,4 @@
-package todo
+package db
 
 import (
 	"context"
@@ -15,17 +15,17 @@ type DB interface {
 	Delete(context.Context, uuid.UUID) error
 }
 
-func NewDB(gormDB *gorm.DB) DB {
-	return &db{conn: gormDB}
+func NewDB(db *gorm.DB) DB {
+	return &DefaultDB{conn: db}
 }
 
-type db struct {
+type DefaultDB struct {
 
 	//	Database Connection
 	conn *gorm.DB
 }
 
-func (db *db) Create(ctx context.Context, options *CreateOptions) (*Todo, error) {
+func (db *DefaultDB) Create(ctx context.Context, options *CreateOptions) (*Todo, error) {
 	txn := db.conn.WithContext(ctx)
 
 	var payload Todo
@@ -38,7 +38,7 @@ func (db *db) Create(ctx context.Context, options *CreateOptions) (*Todo, error)
 	return &payload, nil
 }
 
-func (db *db) Get(ctx context.Context, ID uuid.UUID) (*Todo, error) {
+func (db *DefaultDB) Get(ctx context.Context, ID uuid.UUID) (*Todo, error) {
 	txn := db.conn.WithContext(ctx)
 
 	var payload Todo
@@ -50,7 +50,7 @@ func (db *db) Get(ctx context.Context, ID uuid.UUID) (*Todo, error) {
 	return &payload, nil
 }
 
-func (db *db) List(ctx context.Context, options *ListOptions) ([]*Todo, error) {
+func (db *DefaultDB) List(ctx context.Context, options *ListOptions) ([]*Todo, error) {
 	txn := db.conn.WithContext(ctx)
 
 	var payload []*Todo
@@ -77,7 +77,7 @@ func (db *db) List(ctx context.Context, options *ListOptions) ([]*Todo, error) {
 	return payload, nil
 }
 
-func (db *db) Update(ctx context.Context, id uuid.UUID, options *UpdateOptions) (*Todo, error) {
+func (db *DefaultDB) Update(ctx context.Context, id uuid.UUID, options *UpdateOptions) (*Todo, error) {
 	txn := db.conn.WithContext(ctx)
 
 	var payload Todo
@@ -88,7 +88,7 @@ func (db *db) Update(ctx context.Context, id uuid.UUID, options *UpdateOptions) 
 	return db.Get(ctx, id)
 }
 
-func (db *db) Delete(ctx context.Context, ID uuid.UUID) error {
+func (db *DefaultDB) Delete(ctx context.Context, ID uuid.UUID) error {
 	txn := db.conn.WithContext(ctx)
 
 	var payload Todo
