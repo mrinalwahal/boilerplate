@@ -7,10 +7,10 @@ require (
 	ariga.io/atlas-provider-gorm v0.3.1
 	github.com/casbin/casbin/v2 v2.84.1
 	github.com/casbin/gorm-adapter/v3 v3.21.0
+	github.com/go-chi/chi/v5 v5.0.12
 	github.com/google/uuid v1.6.0
 	github.com/labstack/echo/v4 v4.11.4
 	gorm.io/driver/postgres v1.5.7
-	gorm.io/driver/sqlite v1.5.2
 	gorm.io/gorm v1.25.7
 )
 
@@ -42,6 +42,7 @@ require (
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	gorm.io/driver/mysql v1.5.1 // indirect
+	gorm.io/driver/sqlite v1.5.2 // indirect
 	gorm.io/driver/sqlserver v1.5.2 // indirect
 	gorm.io/plugin/dbresolver v1.3.0 // indirect
 	modernc.org/libc v1.22.2 // indirect

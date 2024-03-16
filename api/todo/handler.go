@@ -31,7 +31,7 @@ func Create(c echo.Context) error {
 	ctx := context.Background()
 
 	//	Get the todo service.
-	service := todo.GetService(db)
+	service := todo.NewService(todo.NewDB(db))
 
 	//	Call the service function to execute the business logic.
 	todo, err := service.Create(ctx, &todo.CreateOptions{
@@ -67,7 +67,7 @@ func Get(c echo.Context) error {
 	ctx := context.Background()
 
 	//	Get the todo service.
-	service := todo.GetService(db)
+	service := todo.NewService(todo.NewDB(db))
 
 	//	Call the service function to execute the business logic.
 	todo, err := service.Get(ctx, uuid)
@@ -100,7 +100,7 @@ func List(c echo.Context) error {
 	ctx := context.Background()
 
 	//	Get the todo service.
-	service := todo.GetService(db)
+	service := todo.NewService(todo.NewDB(db))
 
 	//	Call the service function to execute the business logic.
 	todo, err := service.List(ctx, &todo.ListOptions{
@@ -146,7 +146,7 @@ func Update(c echo.Context) error {
 	ctx := context.Background()
 
 	//	Get the todo service.
-	service := todo.GetService(db)
+	service := todo.NewService(todo.NewDB(db))
 
 	//	Call the service function to execute the business logic.
 	todo, err := service.Update(ctx, uuid, &todo.UpdateOptions{
@@ -182,7 +182,7 @@ func Delete(c echo.Context) error {
 	ctx := context.Background()
 
 	//	Get the todo service.
-	service := todo.GetService(db)
+	service := todo.NewService(todo.NewDB(db))
 
 	//	Call the service function to execute the business logic.
 	err = service.Delete(ctx, uuid)

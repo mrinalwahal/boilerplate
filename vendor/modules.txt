@@ -34,6 +34,10 @@ github.com/glebarez/go-sqlite
 # github.com/glebarez/sqlite v1.7.0
 ## explicit; go 1.18
 github.com/glebarez/sqlite
+# github.com/go-chi/chi/v5 v5.0.12
+## explicit; go 1.14
+github.com/go-chi/chi/v5
+github.com/go-chi/chi/v5/middleware
 # github.com/go-sql-driver/mysql v1.7.0
 ## explicit; go 1.13
 github.com/go-sql-driver/mysql

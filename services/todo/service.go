@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 )
 
 type Service interface {
@@ -15,31 +14,33 @@ type Service interface {
 	Delete(context.Context, uuid.UUID) error
 }
 
+// Initializes and gets the service with the supplied database connection.
+func NewService(db DB) Service {
+	return &service{db: db}
+}
+
 type service struct {
 
-	//	Database connection.
-	db *gorm.DB
+	//	Database layer connection.
+	db DB
 }
 
 func (s *service) Create(ctx context.Context, options *CreateOptions) (*Todo, error) {
-	return create(s.db.WithContext(ctx), options)
+	return s.db.Create(ctx, options)
 }
 
 func (s *service) Get(ctx context.Context, ID uuid.UUID) (*Todo, error) {
-	return get(s.db.WithContext(ctx), ID)
+	return s.db.Get(ctx, ID)
 }
 
 func (s *service) List(ctx context.Context, options *ListOptions) ([]*Todo, error) {
-	return list(s.db.WithContext(ctx), options)
+	return s.db.List(ctx, options)
 }
 
-func (s *service) Update(ctx context.Context, id uuid.UUID, options *UpdateOptions) (*Todo, error) {
-	if err := update(s.db.WithContext(ctx), id, options); err != nil {
-		return nil, err
-	}
-	return s.Get(ctx, id)
+func (s *service) Update(ctx context.Context, ID uuid.UUID, options *UpdateOptions) (*Todo, error) {
+	return s.db.Update(ctx, ID, options)
 }
 
 func (s *service) Delete(ctx context.Context, ID uuid.UUID) error {
-	return delete(s.db.WithContext(ctx), ID)
+	return s.db.Delete(ctx, ID)
 }
