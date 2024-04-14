@@ -9,9 +9,6 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/mrinalwahal/boilerplate/record/model"
-	"github.com/mrinalwahal/boilerplate/record/service"
-	"go.uber.org/mock/gomock"
 )
 
 func TestUpdateHandler_ServeHTTP(t *testing.T) {
@@ -39,9 +36,6 @@ func TestUpdateHandler_ServeHTTP(t *testing.T) {
 		// Example: `w: httptest.NewRecorder(), r: httptest.NewRequest(http.MethodPost, "/", nil)`
 		args args
 
-		// The expectation that we will set on the mock database layer.
-		expectation *gomock.Call
-
 		// The validation function that will be used to validate the output.
 		validation func(*Response) error
 
@@ -63,11 +57,6 @@ func TestUpdateHandler_ServeHTTP(t *testing.T) {
 					return req
 				}(),
 			},
-			expectation: environment.service.EXPECT().Update(gomock.Any(), recordID, &service.UpdateOptions{
-				Title: "Updated Title",
-			}).Return(&model.Record{
-				Title: "Updated Title",
-			}, nil),
 			wantStatus: http.StatusOK,
 			wantErr:    false,
 		},
@@ -81,11 +70,6 @@ func TestUpdateHandler_ServeHTTP(t *testing.T) {
 					return req
 				}(),
 			},
-			expectation: environment.service.EXPECT().Update(gomock.Any(), recordID, &service.UpdateOptions{
-				Title: "Updated Title",
-			}).Return(&model.Record{
-				Title: "Wrong Title",
-			}, nil),
 			validation: func(r *Response) error {
 				if r.Message != "Updated title" {
 					return fmt.Errorf("expected message to be 'Updated title', got %s", r.Message)
@@ -100,11 +84,7 @@ func TestUpdateHandler_ServeHTTP(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			h := &UpdateHandler{
 				service: environment.service,
-				log:     environment.log,
 			}
-
-			// Set the expectation.
-			tt.expectation.Times(1)
 
 			h.ServeHTTP(tt.args.w, tt.args.r)
 

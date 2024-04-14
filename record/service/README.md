@@ -46,7 +46,7 @@ This will generate the file `mock.go` which will contain your mock service. You 
 func TestFoo(t *testing.T) {
   ctrl := gomock.NewController(t)
 
-  m := NewMockDatabase(ctrl)
+  m := NewMockService(ctrl)
 
   // Asserts that the first and only call to Bar() is passed 99.
   // Anything else will fail.

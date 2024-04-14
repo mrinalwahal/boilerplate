@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"testing"
 
 	"github.com/google/uuid"
@@ -12,15 +13,18 @@ import (
 	"gorm.io/gorm"
 )
 
-// Temporary testsqldbconfig that contains all the configuration required by our tests.
-type testsqldbconfig struct {
+// Temporary testconfig that contains all the configuration required by our tests.
+type testconfig struct {
 
 	// Test service connection.
 	conn *gorm.DB
+
+	// Logger instance.
+	log *slog.Logger
 }
 
 // Setup the test environment.
-func configure(t *testing.T) *testsqldbconfig {
+func configure(t *testing.T) *testconfig {
 
 	// Open an in-memory service connection with SQLite.
 	conn, err := gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{})
@@ -46,18 +50,19 @@ func configure(t *testing.T) *testsqldbconfig {
 		}
 	})
 
-	return &testsqldbconfig{
+	return &testconfig{
 		conn: conn,
+		log:  slog.Default(),
 	}
 }
 
-func Test_NewSQLDB(t *testing.T) {
+func Test_NewService(t *testing.T) {
 
 	t.Run("create service with nil config", func(t *testing.T) {
 
 		defer func() {
 			if r := recover(); r == nil {
-				t.Errorf("expected NewSQLDB to panic, but it didn't")
+				t.Errorf("expected NewService to panic, but it didn't")
 			}
 		}()
 
@@ -66,12 +71,13 @@ func Test_NewSQLDB(t *testing.T) {
 
 	t.Run("create service with valid config", func(t *testing.T) {
 
-		// Setup the test environment.
-		environment := configure(t)
+		// Setup the test config.
+		config := configure(t)
 
 		// Initialize the service.
 		service := NewService(&Config{
-			DB: environment.conn,
+			DB:     config.conn,
+			Logger: config.log,
 		})
 
 		if service == nil {
@@ -80,14 +86,15 @@ func Test_NewSQLDB(t *testing.T) {
 	})
 }
 
-func Test_Database_Create(t *testing.T) {
+func Test_Service_Create(t *testing.T) {
 
 	// Setup the test config.
 	config := configure(t)
 
 	// Initialize the service.
 	service := &service{
-		conn: config.conn,
+		db:  config.conn,
+		log: config.log,
 	}
 
 	t.Run("create record with nil options", func(t *testing.T) {
@@ -129,14 +136,15 @@ func Test_Database_Create(t *testing.T) {
 	})
 }
 
-func Test_Database_List(t *testing.T) {
+func Test_Service_List(t *testing.T) {
 
 	// Setup the test config.
 	config := configure(t)
 
 	// Initialize the service.
 	service := &service{
-		conn: config.conn,
+		db:  config.conn,
+		log: config.log,
 	}
 
 	ctx := context.Background()
@@ -281,14 +289,15 @@ func Test_Database_List(t *testing.T) {
 	})
 }
 
-func Test_Database_Get(t *testing.T) {
+func Test_Service_Get(t *testing.T) {
 
 	// Setup the test config.
 	config := configure(t)
 
 	// Initialize the service.
 	service := &service{
-		conn: config.conn,
+		db:  config.conn,
+		log: config.log,
 	}
 
 	// Seed the service with sample records.
@@ -338,14 +347,15 @@ func Test_Database_Get(t *testing.T) {
 	})
 }
 
-func Test_Database_Update(t *testing.T) {
+func Test_Service_Update(t *testing.T) {
 
 	// Setup the test config.
 	config := configure(t)
 
 	// Initialize the service.
 	service := &service{
-		conn: config.conn,
+		db:  config.conn,
+		log: config.log,
 	}
 
 	// Seed the service with sample records.
@@ -420,14 +430,15 @@ func Test_Database_Update(t *testing.T) {
 	})
 }
 
-func Test_Database_Delete(t *testing.T) {
+func Test_Service_Delete(t *testing.T) {
 
 	// Setup the test config.
 	config := configure(t)
 
 	// Initialize the service.
 	service := &service{
-		conn: config.conn,
+		db:  config.conn,
+		log: config.log,
 	}
 
 	ctx := context.Background()

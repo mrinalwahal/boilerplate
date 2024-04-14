@@ -8,8 +8,6 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/mrinalwahal/boilerplate/record/model"
-	"go.uber.org/mock/gomock"
 )
 
 func TestGetHandler_ServeHTTP(t *testing.T) {
@@ -37,9 +35,6 @@ func TestGetHandler_ServeHTTP(t *testing.T) {
 		// Example: `w: httptest.NewRecorder(), r: httptest.NewRequest(http.MethodPost, "/", nil)`
 		args args
 
-		// The expectation that we will set on the mock database layer.
-		expectation *gomock.Call
-
 		// The validation function that will be used to validate the output.
 		validation func(*Response) error
 
@@ -61,12 +56,6 @@ func TestGetHandler_ServeHTTP(t *testing.T) {
 					return req
 				}(),
 			},
-			expectation: environment.service.EXPECT().Get(gomock.Any(), gomock.Any()).Return(&model.Record{
-				Base: model.Base{
-					ID: recordID,
-				},
-				Title: "Record 1",
-			}, nil),
 			validation: func(res *Response) error {
 				if res.Data == nil {
 					t.Log("Response:", res)
@@ -81,11 +70,7 @@ func TestGetHandler_ServeHTTP(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			h := &GetHandler{
 				service: environment.service,
-				log:     environment.log,
 			}
-
-			// Set the expectation.
-			tt.expectation.Times(1)
 
 			h.ServeHTTP(tt.args.w, tt.args.r)
 

@@ -12,7 +12,6 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/mrinalwahal/boilerplate/api/http/router"
 	"github.com/mrinalwahal/boilerplate/pkg/middleware"
-	"github.com/mrinalwahal/boilerplate/record/db"
 	"github.com/mrinalwahal/boilerplate/record/service"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -75,11 +74,6 @@ func main() {
 	sqlDB.SetMaxOpenConns(100)
 	sqlDB.SetMaxIdleConns(10)
 
-	// Connect the database layer.
-	db := db.NewSQLDB(&db.SQLDBConfig{
-		DB: conn,
-	})
-
 	// GORM provides Prometheus plugin to collect DBStats or user-defined metrics
 	// https://gorm.io/docs/prometheus.html
 	// https://github.com/go-gorm/prometheus
@@ -99,7 +93,7 @@ func main() {
 
 	// Get the service layer.
 	service := service.NewService(&service.Config{
-		DB:     db,
+		DB:     conn,
 		Logger: logger,
 	})
 

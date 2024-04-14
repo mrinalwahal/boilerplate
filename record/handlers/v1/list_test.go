@@ -7,9 +7,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
-	"github.com/mrinalwahal/boilerplate/record/model"
-	"go.uber.org/mock/gomock"
 )
 
 func TestListHandler_ServeHTTP(t *testing.T) {
@@ -34,9 +31,6 @@ func TestListHandler_ServeHTTP(t *testing.T) {
 		// Example: `w: httptest.NewRecorder(), r: httptest.NewRequest(http.MethodPost, "/", nil)`
 		args args
 
-		// The expectation that we will set on the mock database layer.
-		expectation *gomock.Call
-
 		// The validation function that will be used to validate the output.
 		validation func(*Response) error
 
@@ -54,11 +48,6 @@ func TestListHandler_ServeHTTP(t *testing.T) {
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest(http.MethodPost, "/", nil),
 			},
-			expectation: config.service.EXPECT().List(gomock.Any(), gomock.Any()).Return([]*model.Record{
-				{
-					Title: "Record 1",
-				},
-			}, nil),
 			validation: func(r *Response) error {
 				if r == nil {
 					return fmt.Errorf("expected a response, got nil")
@@ -77,11 +66,6 @@ func TestListHandler_ServeHTTP(t *testing.T) {
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest(http.MethodPost, "/", bytes.NewBufferString(`{"limit":1}`)),
 			},
-			expectation: config.service.EXPECT().List(gomock.Any(), gomock.Any()).Return([]*model.Record{
-				{
-					Title: "Record 1",
-				},
-			}, nil),
 			validation: func(r *Response) error {
 				if r == nil {
 					return fmt.Errorf("expected a response, got nil")
@@ -100,14 +84,6 @@ func TestListHandler_ServeHTTP(t *testing.T) {
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest(http.MethodGet, "/", bytes.NewBufferString(`{"limit":1}`)),
 			},
-			expectation: config.service.EXPECT().List(gomock.Any(), gomock.Any()).Return([]*model.Record{
-				{
-					Title: "Record 1",
-				},
-				{
-					Title: "Record 2",
-				},
-			}, nil),
 			validation: func(r *Response) error {
 				if r == nil {
 					return fmt.Errorf("expected a response, got nil")
@@ -126,11 +102,7 @@ func TestListHandler_ServeHTTP(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			h := &ListHandler{
 				service: config.service,
-				log:     config.log,
 			}
-
-			// Set the expectation.
-			tt.expectation.Times(1)
 
 			h.ServeHTTP(tt.args.w, tt.args.r)
 

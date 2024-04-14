@@ -1,12 +1,13 @@
-//go:generate mockgen -destination=db_mock.go -source=service.go -package=service
+//go:generate mockgen -destination=service_mock.go -source=service.go -package=service
 package service
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/google/uuid"
 	"github.com/mrinalwahal/boilerplate/pkg/middleware"
-	model "github.com/mrinalwahal/boilerplate/record/model"
+	"github.com/mrinalwahal/boilerplate/record/model"
 	"gorm.io/gorm"
 )
 
@@ -26,6 +27,11 @@ type Config struct {
 	//
 	// This field is mandatory.
 	DB *gorm.DB
+
+	// Logger instance.
+	//
+	// This field is mandatory.
+	Logger *slog.Logger
 }
 
 func NewService(config *Config) Service {
@@ -34,32 +40,44 @@ func NewService(config *Config) Service {
 	}
 
 	service := service{
-		conn: config.DB,
+		db:  config.DB,
+		log: config.Logger,
 	}
+
+	if service.log == nil {
+		service.log = slog.Default()
+	}
+
+	service.log = service.log.With("service", "record")
 
 	return &service
 }
 
-// service is the service layer implementation of an SQL/Relational type service.
+// service is the standard and default service layer implementation.
 //
-// For example, MySQL, PostgreSQL, SQLite, etc.
-//
-// It implements the DB interface.
+// It implements the Service interface.
 type service struct {
 
-	//	Database Connection
-	conn *gorm.DB
+	//	Service Connection
+	db *gorm.DB
+
+	// Logger instance
+	log *slog.Logger
 }
 
 // Create operation creates a new record in the service.
 func (service *service) Create(ctx context.Context, options *CreateOptions) (*model.Record, error) {
-	txn := service.conn.WithContext(ctx)
+	service.log.LogAttrs(ctx, slog.LevelDebug, "creating a new record",
+		slog.String("function", "create"),
+	)
 	if options == nil {
 		return nil, ErrInvalidOptions
 	}
 	if err := options.validate(); err != nil {
 		return nil, err
 	}
+
+	txn := service.db.WithContext(ctx)
 
 	//
 	// This method has no Row Level Security (RLS) checks.
@@ -80,13 +98,17 @@ func (service *service) Create(ctx context.Context, options *CreateOptions) (*mo
 
 // List operation fetches a list of records from the service.
 func (service *service) List(ctx context.Context, options *ListOptions) ([]*model.Record, error) {
-	txn := service.conn.WithContext(ctx)
+	service.log.LogAttrs(ctx, slog.LevelDebug, "fetching records",
+		slog.String("function", "list"),
+	)
 	if options == nil {
 		options = &ListOptions{}
 	}
 	if err := options.validate(); err != nil {
 		return nil, err
 	}
+
+	txn := service.db.WithContext(ctx)
 
 	// If the request context contains JWT claims, apply Row Level Security (RLS) checks.
 	claims, exists := ctx.Value(middleware.XJWTClaims).(middleware.JWTClaims)
@@ -124,10 +146,14 @@ func (service *service) List(ctx context.Context, options *ListOptions) ([]*mode
 
 // Get operation fetches a record from the service.
 func (service *service) Get(ctx context.Context, ID uuid.UUID) (*model.Record, error) {
-	txn := service.conn.WithContext(ctx)
+	service.log.LogAttrs(ctx, slog.LevelDebug, "fetching a record",
+		slog.String("function", "get"),
+	)
 	if ID == uuid.Nil {
 		return nil, ErrInvalidRecordID
 	}
+
+	txn := service.db.WithContext(ctx)
 
 	// If the request context contains JWT claims, apply Row Level Security (RLS) checks.
 	claims, exists := ctx.Value(middleware.XJWTClaims).(middleware.JWTClaims)
@@ -150,7 +176,9 @@ func (service *service) Get(ctx context.Context, ID uuid.UUID) (*model.Record, e
 
 // Update operation updates a record in the service.
 func (service *service) Update(ctx context.Context, id uuid.UUID, options *UpdateOptions) (*model.Record, error) {
-	txn := service.conn.WithContext(ctx)
+	service.log.LogAttrs(ctx, slog.LevelDebug, "updating a record",
+		slog.String("function", "update"),
+	)
 	if id == uuid.Nil {
 		return nil, ErrInvalidRecordID
 	}
@@ -160,6 +188,8 @@ func (service *service) Update(ctx context.Context, id uuid.UUID, options *Updat
 	if err := options.validate(); err != nil {
 		return nil, err
 	}
+
+	txn := service.db.WithContext(ctx)
 
 	// If the request context contains JWT claims, apply Row Level Security (RLS) checks.
 	claims, exists := ctx.Value(middleware.XJWTClaims).(middleware.JWTClaims)
@@ -181,10 +211,14 @@ func (service *service) Update(ctx context.Context, id uuid.UUID, options *Updat
 
 // Delete operation deletes a record from the service.
 func (service *service) Delete(ctx context.Context, ID uuid.UUID) error {
-	txn := service.conn.WithContext(ctx)
+	service.log.LogAttrs(ctx, slog.LevelDebug, "deleting a record",
+		slog.String("function", "delete"),
+	)
 	if ID == uuid.Nil {
 		return ErrInvalidRecordID
 	}
+
+	txn := service.db.WithContext(ctx)
 
 	// If the request context contains JWT claims, apply Row Level Security (RLS) checks.
 	claims, exists := ctx.Value(middleware.XJWTClaims).(middleware.JWTClaims)

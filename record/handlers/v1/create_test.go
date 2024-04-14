@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -13,7 +12,6 @@ import (
 	"github.com/mrinalwahal/boilerplate/pkg/middleware"
 	"github.com/mrinalwahal/boilerplate/record/model"
 	"github.com/mrinalwahal/boilerplate/record/service"
-	"go.uber.org/mock/gomock"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -21,11 +19,8 @@ import (
 // Contains all the configuration required by our tests.
 type testconfig struct {
 
-	// Database connection.
-	service *service.MockService
-
-	// Test log.
-	log *slog.Logger
+	// Service layer.
+	service service.Service
 }
 
 // Setup the test environment.
@@ -55,8 +50,10 @@ func configure(t *testing.T) *testconfig {
 		}
 	})
 
-	return &testsqldbconfig{
-		conn: conn,
+	return &testconfig{
+		service: service.NewService(&service.Config{
+			DB: conn,
+		}),
 	}
 }
 
@@ -70,15 +67,11 @@ func TestCreateHandler_ServeHTTP(t *testing.T) {
 		// Create the handler.
 		handler := NewCreateHandler(&CreateHandlerConfig{
 			Service: config.service,
-			Logger:  config.log,
 		})
 
 		// Initialize test request and response recorder.
 		r := httptest.NewRequest(http.MethodPost, "/v1/records", nil)
 		w := httptest.NewRecorder()
-
-		// The service layer should ideally not be expecting any calls to reach it.
-		config.service.EXPECT().Create(gomock.Any(), gomock.Any()).Times(0)
 
 		// Serve the request.
 		handler.ServeHTTP(w, r)
@@ -93,7 +86,6 @@ func TestCreateHandler_ServeHTTP(t *testing.T) {
 		// Create the handler.
 		handler := NewCreateHandler(&CreateHandlerConfig{
 			Service: config.service,
-			Logger:  config.log,
 		})
 
 		body, err := json.Marshal(CreateOptions{
@@ -106,9 +98,6 @@ func TestCreateHandler_ServeHTTP(t *testing.T) {
 		// Initialize test request and response recorder.
 		r := httptest.NewRequest(http.MethodPost, "/v1/records", bytes.NewBuffer(body))
 		w := httptest.NewRecorder()
-
-		// The service layer should ideally return an error because the JWT claims are missing.
-		config.service.EXPECT().Create(gomock.Any(), gomock.Any()).Return(nil, service.ErrInvalidOptions).Times(0)
 
 		// Serve the request.
 		handler.ServeHTTP(w, r)
@@ -123,7 +112,6 @@ func TestCreateHandler_ServeHTTP(t *testing.T) {
 		// Create the handler.
 		handler := NewCreateHandler(&CreateHandlerConfig{
 			Service: config.service,
-			Logger:  config.log,
 		})
 
 		options := CreateOptions{
@@ -143,15 +131,6 @@ func TestCreateHandler_ServeHTTP(t *testing.T) {
 		r = r.WithContext(context.WithValue(r.Context(), middleware.XJWTClaims, middleware.JWTClaims{
 			XUserID: user_id,
 		}))
-
-		// The service layer is expected to return a record.
-		config.service.EXPECT().Create(gomock.Any(), gomock.Any()).Return(&model.Record{
-			Base: model.Base{
-				ID: uuid.New(),
-			},
-			Title:  options.Title,
-			UserID: user_id,
-		}, nil).Times(1)
 
 		// Serve the request.
 		handler.ServeHTTP(w, r)
