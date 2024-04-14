@@ -6,8 +6,8 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
-	"github.com/mrinalwahal/service/pkg/middleware"
-	"github.com/mrinalwahal/service/service"
+	"github.com/mrinalwahal/boilerplate/pkg/middleware"
+	"github.com/mrinalwahal/boilerplate/records/service"
 )
 
 // CreateOptions represents the options for creating a record.

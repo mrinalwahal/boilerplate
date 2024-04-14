@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/mrinalwahal/service/pkg/writer"
+	"github.com/mrinalwahal/boilerplate/pkg/writer"
 )
 
 type LoggingConfig struct {

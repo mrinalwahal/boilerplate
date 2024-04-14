@@ -6,8 +6,8 @@ import (
 	"log/slog"
 
 	"github.com/google/uuid"
-	"github.com/mrinalwahal/service/db"
-	"github.com/mrinalwahal/service/model"
+	"github.com/mrinalwahal/boilerplate/model"
+	"github.com/mrinalwahal/boilerplate/records/db"
 )
 
 type Service interface {

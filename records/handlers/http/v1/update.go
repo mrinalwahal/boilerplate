@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
-	"github.com/mrinalwahal/service/service"
+	"github.com/mrinalwahal/boilerplate/records/service"
 )
 
 // UpdateOptions represents the options for updating a record.

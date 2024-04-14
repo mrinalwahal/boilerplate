@@ -14,7 +14,7 @@ import (
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
-	model "github.com/mrinalwahal/service/model"
+	model "github.com/mrinalwahal/boilerplate/model"
 	gomock "go.uber.org/mock/gomock"
 )
 

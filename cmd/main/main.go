@@ -10,10 +10,10 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
-	"github.com/mrinalwahal/service/api/http/router"
-	"github.com/mrinalwahal/service/db"
-	"github.com/mrinalwahal/service/pkg/middleware"
-	"github.com/mrinalwahal/service/service"
+	"github.com/mrinalwahal/boilerplate/api/http/router"
+	"github.com/mrinalwahal/boilerplate/pkg/middleware"
+	"github.com/mrinalwahal/boilerplate/records/db"
+	"github.com/mrinalwahal/boilerplate/records/service"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 

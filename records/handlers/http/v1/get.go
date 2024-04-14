@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
-	"github.com/mrinalwahal/service/service"
+	"github.com/mrinalwahal/boilerplate/records/service"
 )
 
 // Get handler gets the record.

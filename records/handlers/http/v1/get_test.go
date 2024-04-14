@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/mrinalwahal/service/model"
+	"github.com/mrinalwahal/boilerplate/model"
 	"go.uber.org/mock/gomock"
 )
 

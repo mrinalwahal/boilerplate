@@ -11,11 +11,11 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	v1 "github.com/mrinalwahal/service/api/http/handlers/v1"
-	"github.com/mrinalwahal/service/db"
-	"github.com/mrinalwahal/service/model"
-	"github.com/mrinalwahal/service/pkg/middleware"
-	"github.com/mrinalwahal/service/service"
+	"github.com/mrinalwahal/boilerplate/model"
+	"github.com/mrinalwahal/boilerplate/pkg/middleware"
+	"github.com/mrinalwahal/boilerplate/records/db"
+	v1 "github.com/mrinalwahal/boilerplate/records/handlers/http/v1"
+	"github.com/mrinalwahal/boilerplate/records/service"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )

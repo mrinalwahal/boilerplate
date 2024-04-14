@@ -10,9 +10,9 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/mrinalwahal/service/model"
-	"github.com/mrinalwahal/service/pkg/middleware"
-	"github.com/mrinalwahal/service/service"
+	"github.com/mrinalwahal/boilerplate/model"
+	"github.com/mrinalwahal/boilerplate/pkg/middleware"
+	"github.com/mrinalwahal/boilerplate/records/service"
 	"go.uber.org/mock/gomock"
 )
 
