@@ -2,99 +2,97 @@ package service
 
 import (
 	"context"
-	"log/slog"
+	"fmt"
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/mrinalwahal/boilerplate/record/db"
+	"github.com/mrinalwahal/boilerplate/pkg/middleware"
 	"github.com/mrinalwahal/boilerplate/record/model"
-	"go.uber.org/mock/gomock"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
-// Contains all the configuration required by our tests.
-type testconfig struct {
+// Temporary testsqldbconfig that contains all the configuration required by our tests.
+type testsqldbconfig struct {
 
-	// Mock database layer.
-	db *db.MockDB
-
-	// Test log.
-	log *slog.Logger
+	// Test service connection.
+	conn *gorm.DB
 }
 
 // Setup the test environment.
-func configure(t *testing.T) *testconfig {
+func configure(t *testing.T) *testsqldbconfig {
 
-	// Get the mock database layer.
-	db := db.NewMockDB(gomock.NewController(t))
-	return &testconfig{
-		db:  db,
-		log: slog.Default(),
+	// Open an in-memory service connection with SQLite.
+	conn, err := gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("failed to open the service connection: %v", err)
+	}
+
+	// Migrate the schema.
+	if err := conn.AutoMigrate(&model.Record{}); err != nil {
+		t.Fatalf("failed to migrate the schema: %v", err)
+	}
+
+	// Cleanup the environment after the test is complete.
+	t.Cleanup(func() {
+
+		// Close the connection.
+		sqlDB, err := conn.DB()
+		if err != nil {
+			t.Fatalf("failed to get the service connection: %v", err)
+		}
+		if err := sqlDB.Close(); err != nil {
+			t.Fatalf("failed to close the service connection: %v", err)
+		}
+	})
+
+	return &testsqldbconfig{
+		conn: conn,
 	}
 }
 
-func Test_NewService(t *testing.T) {
+func Test_NewSQLDB(t *testing.T) {
 
-	t.Run("nil config", func(t *testing.T) {
+	t.Run("create service with nil config", func(t *testing.T) {
 
 		defer func() {
 			if r := recover(); r == nil {
-				t.Errorf("NewService() did not panic")
+				t.Errorf("expected NewSQLDB to panic, but it didn't")
 			}
 		}()
 
-		// Initialize the service.
 		NewService(nil)
 	})
 
-	t.Run("valid config w/ db", func(t *testing.T) {
+	t.Run("create service with valid config", func(t *testing.T) {
 
-		// Get the mock database layer.
-		db := db.NewMockDB(gomock.NewController(t))
-
-		// Initialize the service.
-		s := NewService(&Config{
-			DB: db,
-		})
-
-		if s == nil {
-			t.Errorf("NewService() = %v, want a valid service", s)
-		}
-	})
-
-	t.Run("valid config w/ db and logger", func(t *testing.T) {
-
-		// Get the mock database layer.
-		db := db.NewMockDB(gomock.NewController(t))
+		// Setup the test environment.
+		environment := configure(t)
 
 		// Initialize the service.
-		s := NewService(&Config{
-			DB:     db,
-			Logger: slog.Default(),
+		service := NewService(&Config{
+			DB: environment.conn,
 		})
 
-		if s == nil {
-			t.Errorf("NewService() = %v, want a valid service", s)
+		if service == nil {
+			t.Fatalf("expected service to be initialized, got nil")
 		}
 	})
 }
 
-func Test_Service_Create(t *testing.T) {
+func Test_Database_Create(t *testing.T) {
 
 	// Setup the test config.
 	config := configure(t)
 
 	// Initialize the service.
-	s := &service{
-		db:     config.db,
-		logger: config.log,
+	service := &service{
+		conn: config.conn,
 	}
 
 	t.Run("create record with nil options", func(t *testing.T) {
 
-		// Make sure the database layer is not expecting a call.
-		config.db.EXPECT().Create(gomock.Any(), gomock.Any()).Times(0)
-
-		_, err := s.Create(context.Background(), nil)
+		_, err := service.Create(context.Background(), nil)
 		if err == nil || err != ErrInvalidOptions {
 			t.Errorf("service.Create() error = %v, wantErr %v", err, true)
 		}
@@ -102,12 +100,12 @@ func Test_Service_Create(t *testing.T) {
 
 	t.Run("create record with invalid options", func(t *testing.T) {
 
-		// Make sure the database layer is not expecting a call.
-		config.db.EXPECT().Create(gomock.Any(), gomock.Any()).Times(0)
+		options := CreateOptions{
+			Title:  "",
+			UserID: uuid.Nil,
+		}
 
-		_, err := s.Create(context.Background(), &CreateOptions{
-			Title: "",
-		})
+		_, err := service.Create(context.Background(), &options)
 		if err == nil {
 			t.Errorf("service.Create() error = %v, wantErr %v", err, true)
 		}
@@ -115,191 +113,275 @@ func Test_Service_Create(t *testing.T) {
 
 	t.Run("create record with valid options", func(t *testing.T) {
 
-		record := model.Record{
-			Title: "Test Record",
-		}
-
-		// Set the expectation at the database layer.
-		config.db.EXPECT().Create(gomock.Any(), gomock.Any()).Return(&model.Record{
-			Base: model.Base{
-				ID: uuid.New(),
-			},
-			Title: record.Title,
-		}, nil).Times(1)
-
-		got, err := s.Create(context.Background(), &CreateOptions{
-			Title:  record.Title,
+		options := CreateOptions{
+			Title:  "Test Record",
 			UserID: uuid.New(),
-		})
+		}
+
+		record, err := service.Create(context.Background(), &options)
 		if err != nil {
-			t.Errorf("service.Create() error = %v, wantErr %v", err, false)
+			t.Fatalf("failed to create record: %v", err)
 		}
-		if got.ID == uuid.Nil {
-			t.Errorf("service.Create() = %v, want a valid UUID", got.ID)
-		}
-		if got.Title != record.Title {
-			t.Errorf("service.Create() = %v, want %v", got.Title, record.Title)
+
+		if record.Title != options.Title {
+			t.Fatalf("expected record title to be '%s', got '%s'", options.Title, record.Title)
 		}
 	})
 }
 
-func Test_Service_List(t *testing.T) {
+func Test_Database_List(t *testing.T) {
 
 	// Setup the test config.
 	config := configure(t)
 
 	// Initialize the service.
-	s := &service{
-		db:     config.db,
-		logger: config.log,
+	service := &service{
+		conn: config.conn,
+	}
+
+	ctx := context.Background()
+
+	// Seed the service with some records.
+	for i := 0; i < 5; i++ {
+		_, err := service.Create(ctx, &CreateOptions{
+			Title:  fmt.Sprintf("Record %d", i),
+			UserID: uuid.New(),
+		})
+		if err != nil {
+			t.Fatalf("failed to seed the service: %v", err)
+		}
 	}
 
 	t.Run("list records with nil options", func(t *testing.T) {
 
-		// Make sure the database layer is not expecting a call.
-		config.db.EXPECT().List(gomock.Any(), gomock.Any()).Times(0)
+		records, err := service.List(ctx, nil)
+		if err != nil {
+			t.Fatalf("failed to list records: %v", err)
+		}
 
-		_, err := s.List(context.Background(), nil)
-		if err == nil || err != ErrInvalidOptions {
-			t.Errorf("service.List() error = %v, wantErr %v", err, true)
+		if len(records) < 1 {
+			t.Fatalf("expected at least 1 record, got %d", len(records))
 		}
 	})
 
 	t.Run("list records with invalid options", func(t *testing.T) {
 
-		// Make sure the database layer is not expecting a call.
-		config.db.EXPECT().List(gomock.Any(), gomock.Any()).Times(0)
-
-		_, err := s.List(context.Background(), &ListOptions{
+		records, err := service.List(ctx, &ListOptions{
 			Skip:  -1,
 			Limit: -1,
 		})
 		if err == nil {
 			t.Errorf("service.List() error = %v, wantErr %v", err, true)
 		}
+
+		if len(records) != 0 {
+			t.Errorf("expected 0 records, got %d", len(records))
+		}
 	})
 
 	t.Run("list records with valid options", func(t *testing.T) {
 
-		records := []*model.Record{
-			{
-				Base: model.Base{
-					ID: uuid.New(),
-				},
-				Title: "Test Record",
-			},
+		records, err := service.List(ctx, &ListOptions{})
+		if err != nil {
+			t.Fatalf("failed to list records: %v", err)
 		}
 
-		// Set the expectation at the database layer.
-		config.db.EXPECT().List(gomock.Any(), gomock.Any()).Return(records, nil).Times(1)
+		if len(records) < 1 {
+			t.Fatalf("expected at least 1 record, got %d", len(records))
+		}
+	})
 
-		got, err := s.List(context.Background(), &ListOptions{
-			Skip:  0,
-			Limit: 10,
+	t.Run("list records as a different user than the one who created them", func(t *testing.T) {
+
+		// Add JWT claims to the context.
+		ctx := context.WithValue(context.Background(), middleware.XJWTClaims, middleware.JWTClaims{
+			XUserID: uuid.New(),
+		})
+
+		records, err := service.List(ctx, &ListOptions{})
+		if err != nil {
+			t.Fatalf("failed to list records: %v", err)
+		}
+
+		if len(records) != 0 {
+			t.Fatalf("expected 0 records, got %d", len(records))
+		}
+	})
+
+	t.Run("list w/ title filter", func(t *testing.T) {
+
+		records, err := service.List(ctx, &ListOptions{
+			Title: "Record 1",
 		})
 		if err != nil {
-			t.Errorf("service.List() error = %v, wantErr %v", err, false)
+			t.Fatalf("failed to list records: %v", err)
 		}
-		if len(got) != len(records) {
-			t.Errorf("service.List() = %v, want %v", len(got), len(records))
+
+		if len(records) < 1 {
+			t.Fatalf("expected at least 1 record, got %d", len(records))
+		}
+	})
+
+	t.Run("list w/ skip filter", func(t *testing.T) {
+
+		records, err := service.List(ctx, &ListOptions{
+			Skip: 2,
+		})
+		if err != nil {
+			t.Fatalf("failed to list records: %v", err)
+		}
+
+		if len(records) != 3 {
+			t.Fatalf("expected 3 records, got %d", len(records))
+		}
+	})
+
+	t.Run("list w/ limit filter", func(t *testing.T) {
+
+		records, err := service.List(ctx, &ListOptions{
+			Limit: 2,
+		})
+		if err != nil {
+			t.Fatalf("failed to list records: %v", err)
+		}
+
+		if len(records) != 2 {
+			t.Fatalf("expected 2 records, got %d", len(records))
+		}
+	})
+
+	t.Run("list w/ orderBy filter", func(t *testing.T) {
+
+		records, err := service.List(ctx, &ListOptions{
+			OrderBy: "title",
+		})
+		if err != nil {
+			t.Fatalf("failed to list records: %v", err)
+		}
+
+		if records[3].Title != "Record 3" {
+			t.Logf("received: %v", records[3])
+			t.Fatalf("expected third record to be 'Record 4', got '%s'", records[3].Title)
+		}
+	})
+
+	t.Run("list w/ orderBy and orderDirection filter", func(t *testing.T) {
+
+		records, err := service.List(ctx, &ListOptions{
+			OrderBy:        "title",
+			OrderDirection: "desc",
+		})
+		if err != nil {
+			t.Fatalf("failed to list records: %v", err)
+		}
+
+		if records[0].Title != "Record 4" {
+			t.Fatalf("expected first record to be 'Record 4', got '%s'", records[0].Title)
 		}
 	})
 }
 
-func Test_Service_Get(t *testing.T) {
+func Test_Database_Get(t *testing.T) {
 
 	// Setup the test config.
 	config := configure(t)
 
 	// Initialize the service.
-	s := &service{
-		db:     config.db,
-		logger: config.log,
+	service := &service{
+		conn: config.conn,
 	}
 
-	// Sample record UUID.
-	id := uuid.New()
+	// Seed the service with sample records.
+	options := CreateOptions{
+		Title:  "Test Record",
+		UserID: uuid.New(),
+	}
 
-	t.Run("get record with invalid ID", func(t *testing.T) {
+	ctx := context.Background()
 
-		// Make sure the database layer is not expecting a call.
-		config.db.EXPECT().Get(gomock.Any(), gomock.Any()).Times(0)
+	seed, err := service.Create(ctx, &options)
+	if err != nil {
+		t.Fatalf("failed to seed the service: %v", err)
+	}
 
-		_, err := s.Get(context.Background(), uuid.Nil)
-		if err == nil || err != ErrInvalidOptions {
+	t.Run("get record with nil ID", func(t *testing.T) {
+
+		_, err := service.Get(ctx, uuid.Nil)
+		if err == nil {
 			t.Errorf("service.Get() error = %v, wantErr %v", err, true)
 		}
 	})
 
 	t.Run("get record with valid ID", func(t *testing.T) {
 
-		record := model.Record{
-			Base: model.Base{
-				ID: id,
-			},
-			Title: "Test Record",
-		}
-
-		// Set the expectation at the database layer.
-		config.db.EXPECT().Get(gomock.Any(), id).Return(&record, nil).Times(1)
-
-		got, err := s.Get(context.Background(), id)
+		record, err := service.Get(ctx, seed.ID)
 		if err != nil {
-			t.Errorf("service.Get() error = %v, wantErr %v", err, false)
+			t.Fatalf("failed to get record: %v", err)
 		}
-		if got.ID != id {
-			t.Errorf("service.Get() = %v, want %v", got.ID, id)
+
+		if record.ID != seed.ID {
+			t.Fatalf("expected retrieved record to equal seed, got = %v", record)
 		}
-		if got.Title != record.Title {
-			t.Errorf("service.Get() = %v, want %v", got.Title, record.Title)
+	})
+
+	t.Run("get record as a different user than the one who created it", func(t *testing.T) {
+
+		// Add JWT claims to the context.
+		ctx := context.WithValue(context.Background(), middleware.XJWTClaims, middleware.JWTClaims{
+			XUserID: uuid.New(),
+		})
+
+		_, err := service.Get(ctx, seed.ID)
+		if err == nil {
+			t.Errorf("service.Get() error = %v, wantErr %v", err, true)
 		}
 	})
 }
 
-func Test_Service_Update(t *testing.T) {
+func Test_Database_Update(t *testing.T) {
 
 	// Setup the test config.
 	config := configure(t)
 
 	// Initialize the service.
-	s := &service{
-		db:     config.db,
-		logger: config.log,
+	service := &service{
+		conn: config.conn,
 	}
 
-	// Sample record UUID.
-	id := uuid.New()
+	// Seed the service with sample records.
+	options := CreateOptions{
+		Title:  "Test Record",
+		UserID: uuid.New(),
+	}
 
-	t.Run("update record with invalid ID", func(t *testing.T) {
+	ctx := context.Background()
 
-		// Make sure the database layer is not expecting a call.
-		config.db.EXPECT().Update(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+	seed, err := service.Create(ctx, &options)
+	if err != nil {
+		t.Fatalf("failed to seed the service: %v", err)
+	}
 
-		_, err := s.Update(context.Background(), uuid.Nil, &UpdateOptions{
-			Title: "Test Record",
+	t.Run("update record with nil ID", func(t *testing.T) {
+
+		_, err := service.Update(ctx, uuid.Nil, &UpdateOptions{
+			Title: "Updated Record",
 		})
-		if err == nil || err != ErrInvalidRecordID {
+		if err == nil {
 			t.Errorf("service.Update() error = %v, wantErr %v", err, true)
 		}
 	})
 
 	t.Run("update record with nil options", func(t *testing.T) {
 
-		// Make sure the database layer is not expecting a call.
-		config.db.EXPECT().Update(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
-
-		_, err := s.Update(context.Background(), id, nil)
-		if err == nil || err != ErrInvalidOptions {
+		_, err := service.Update(ctx, seed.ID, nil)
+		if err == nil {
 			t.Errorf("service.Update() error = %v, wantErr %v", err, true)
 		}
 	})
 
 	t.Run("update record with invalid options", func(t *testing.T) {
 
-		// Make sure the database layer is not expecting a call.
-		config.db.EXPECT().Update(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
-
-		_, err := s.Update(context.Background(), id, &UpdateOptions{
+		_, err := service.Update(ctx, seed.ID, &UpdateOptions{
 			Title: "",
 		})
 		if err == nil {
@@ -309,64 +391,88 @@ func Test_Service_Update(t *testing.T) {
 
 	t.Run("update record with valid options", func(t *testing.T) {
 
-		record := model.Record{
-			Base: model.Base{
-				ID: id,
-			},
-			Title: "Test Record",
-		}
-
-		// Set the expectation at the database layer.
-		config.db.EXPECT().Update(gomock.Any(), id, gomock.Any()).Return(&record, nil).Times(1)
-
-		got, err := s.Update(context.Background(), id, &UpdateOptions{
-			Title: "Updated Record",
+		updatedTitle := "Updated Record"
+		record, err := service.Update(ctx, seed.ID, &UpdateOptions{
+			Title: updatedTitle,
 		})
 		if err != nil {
-			t.Errorf("service.Update() error = %v, wantErr %v", err, false)
+			t.Fatalf("failed to update record: %v", err)
 		}
-		if got.ID != id {
-			t.Errorf("service.Update() = %v, want %v", got.ID, id)
+
+		if record.Title != updatedTitle {
+			t.Fatalf("expected record title to be 'Updated Record', got '%s'", record.Title)
 		}
-		if got.Title != record.Title {
-			t.Errorf("service.Update() = %v, want %v", got.Title, record.Title)
+	})
+
+	t.Run("update record as a different user than the one who created it", func(t *testing.T) {
+
+		// Add JWT claims to the context.
+		ctx := context.WithValue(context.Background(), middleware.XJWTClaims, middleware.JWTClaims{
+			XUserID: uuid.New(),
+		})
+
+		_, err := service.Update(ctx, seed.ID, &UpdateOptions{
+			Title: "Updated Record",
+		})
+		if err == nil {
+			t.Errorf("service.Update() error = %v, wantErr %v", err, true)
 		}
 	})
 }
 
-func Test_Service_Delete(t *testing.T) {
+func Test_Database_Delete(t *testing.T) {
 
 	// Setup the test config.
 	config := configure(t)
 
 	// Initialize the service.
-	s := &service{
-		db:     config.db,
-		logger: config.log,
+	service := &service{
+		conn: config.conn,
 	}
 
-	// Sample record UUID.
-	id := uuid.New()
+	ctx := context.Background()
 
-	t.Run("delete record with invalid ID", func(t *testing.T) {
+	t.Run("delete record with nil ID", func(t *testing.T) {
 
-		// Make sure the database layer is not expecting a call.
-		config.db.EXPECT().Delete(gomock.Any(), gomock.Any()).Times(0)
-
-		err := s.Delete(context.Background(), uuid.Nil)
-		if err == nil || err != ErrInvalidRecordID {
+		err := service.Delete(ctx, uuid.Nil)
+		if err == nil {
 			t.Errorf("service.Delete() error = %v, wantErr %v", err, true)
 		}
 	})
 
 	t.Run("delete record with valid ID", func(t *testing.T) {
 
-		// Set the expectation at the database layer.
-		config.db.EXPECT().Delete(gomock.Any(), id).Return(nil).Times(1)
-
-		err := s.Delete(context.Background(), id)
+		seed, err := service.Create(ctx, &CreateOptions{
+			Title:  "Test Record",
+			UserID: uuid.New(),
+		})
 		if err != nil {
-			t.Errorf("service.Delete() error = %v, wantErr %v", err, false)
+			t.Fatalf("failed to seed the service: %v", err)
+		}
+
+		if err := service.Delete(ctx, seed.ID); err != nil {
+			t.Fatalf("failed to delete record: %v", err)
+		}
+	})
+
+	t.Run("delete record as a different user than the one who created it", func(t *testing.T) {
+
+		seed, err := service.Create(ctx, &CreateOptions{
+			Title:  "Test Record",
+			UserID: uuid.New(),
+		})
+		if err != nil {
+			t.Fatalf("failed to seed the service: %v", err)
+		}
+
+		// Add JWT claims to the context.
+		ctx := context.WithValue(context.Background(), middleware.XJWTClaims, middleware.JWTClaims{
+			XUserID: uuid.New(),
+		})
+
+		err = service.Delete(ctx, seed.ID)
+		if err == nil {
+			t.Errorf("service.Delete() error = %v, wantErr %v", err, true)
 		}
 	})
 }

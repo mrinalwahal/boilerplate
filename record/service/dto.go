@@ -24,6 +24,7 @@ func (o *CreateOptions) validate() error {
 	return nil
 }
 
+// ListOptions holds the options for listing records.
 type ListOptions struct {
 
 	//	Title of the record.
@@ -39,15 +40,14 @@ type ListOptions struct {
 }
 
 func (o *ListOptions) validate() error {
-	if o.Skip < 0 {
-		return ErrInvalidFilters
-	}
-	if o.Limit < 0 || o.Limit > 100 {
+	if o.Skip < 0 ||
+		o.Limit < 0 || o.Limit > 100 {
 		return ErrInvalidFilters
 	}
 	return nil
 }
 
+// UpdateOptions holds the options for updating a record.
 type UpdateOptions struct {
 
 	//	Title of the record.

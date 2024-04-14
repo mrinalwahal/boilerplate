@@ -14,12 +14,14 @@ import (
 	"github.com/mrinalwahal/boilerplate/record/model"
 	"github.com/mrinalwahal/boilerplate/record/service"
 	"go.uber.org/mock/gomock"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 // Contains all the configuration required by our tests.
 type testconfig struct {
 
-	// Mock service layer.
+	// Database connection.
 	service *service.MockService
 
 	// Test log.
@@ -29,11 +31,32 @@ type testconfig struct {
 // Setup the test environment.
 func configure(t *testing.T) *testconfig {
 
-	// Get the mock service layer.
-	service := service.NewMockService(gomock.NewController(t))
-	return &testconfig{
-		service: service,
-		log:     slog.Default(),
+	// Open an in-memory database connection with SQLite.
+	conn, err := gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("failed to open the database connection: %v", err)
+	}
+
+	// Migrate the schema.
+	if err := conn.AutoMigrate(&model.Record{}); err != nil {
+		t.Fatalf("failed to migrate the schema: %v", err)
+	}
+
+	// Cleanup the environment after the test is complete.
+	t.Cleanup(func() {
+
+		// Close the connection.
+		sqlDB, err := conn.DB()
+		if err != nil {
+			t.Fatalf("failed to get the database connection: %v", err)
+		}
+		if err := sqlDB.Close(); err != nil {
+			t.Fatalf("failed to close the database connection: %v", err)
+		}
+	})
+
+	return &testsqldbconfig{
+		conn: conn,
 	}
 }
 
