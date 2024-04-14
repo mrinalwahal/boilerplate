@@ -7,7 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/mrinalwahal/boilerplate/model"
-	"github.com/mrinalwahal/boilerplate/records/db"
+	"github.com/mrinalwahal/boilerplate/record/db"
 	"go.uber.org/mock/gomock"
 )
 

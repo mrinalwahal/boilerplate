@@ -13,9 +13,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/mrinalwahal/boilerplate/model"
 	"github.com/mrinalwahal/boilerplate/pkg/middleware"
-	"github.com/mrinalwahal/boilerplate/records/db"
-	v1 "github.com/mrinalwahal/boilerplate/records/handlers/http/v1"
-	"github.com/mrinalwahal/boilerplate/records/service"
+	"github.com/mrinalwahal/boilerplate/record/db"
+	v1 "github.com/mrinalwahal/boilerplate/record/handlers/http/v1"
+	"github.com/mrinalwahal/boilerplate/record/service"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )

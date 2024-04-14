@@ -4,8 +4,8 @@ import (
 	"log/slog"
 	"net/http"
 
-	v1 "github.com/mrinalwahal/boilerplate/records/handlers/http/v1"
-	"github.com/mrinalwahal/boilerplate/records/service"
+	v1 "github.com/mrinalwahal/boilerplate/record/handlers/http/v1"
+	"github.com/mrinalwahal/boilerplate/record/service"
 )
 
 type HTTPRouter struct {

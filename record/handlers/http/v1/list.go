@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/dyninc/qstring"
-	"github.com/mrinalwahal/boilerplate/records/service"
+	"github.com/mrinalwahal/boilerplate/record/service"
 )
 
 // ListOptions represents the options for listing records.

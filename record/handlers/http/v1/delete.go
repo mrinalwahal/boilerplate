@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
-	"github.com/mrinalwahal/boilerplate/records/service"
+	"github.com/mrinalwahal/boilerplate/record/service"
 )
 
 // Delete handler deletes the record.

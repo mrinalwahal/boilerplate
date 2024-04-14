@@ -12,8 +12,8 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/mrinalwahal/boilerplate/api/http/router"
 	"github.com/mrinalwahal/boilerplate/pkg/middleware"
-	"github.com/mrinalwahal/boilerplate/records/db"
-	"github.com/mrinalwahal/boilerplate/records/service"
+	"github.com/mrinalwahal/boilerplate/record/db"
+	"github.com/mrinalwahal/boilerplate/record/service"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
