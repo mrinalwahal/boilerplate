@@ -9,8 +9,8 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/mrinalwahal/boilerplate/record/model"
-	"github.com/mrinalwahal/boilerplate/record/service"
+	"github.com/mrinalwahal/boilerplate/organisation/model"
+	"github.com/mrinalwahal/boilerplate/organisation/service"
 	"go.uber.org/mock/gomock"
 )
 
@@ -19,7 +19,7 @@ func TestUpdateHandler_ServeHTTP(t *testing.T) {
 	// Setup the test environment.
 	environment := configure(t)
 
-	// Test UUID of the record.
+	// Test UUID of the organisation.
 	recordID := uuid.New()
 
 	type args struct {
@@ -31,7 +31,7 @@ func TestUpdateHandler_ServeHTTP(t *testing.T) {
 		// The name of our test.
 		// This will be used to identify the test in the output.
 		//
-		// Example: "get a record"
+		// Example: "get a organisation"
 		name string
 
 		// The arguments that we will pass to the function.
@@ -54,7 +54,7 @@ func TestUpdateHandler_ServeHTTP(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "update record succesfully",
+			name: "update organisation succesfully",
 			args: args{
 				w: httptest.NewRecorder(),
 				r: func() *http.Request {
@@ -65,14 +65,14 @@ func TestUpdateHandler_ServeHTTP(t *testing.T) {
 			},
 			expectation: environment.service.EXPECT().Update(gomock.Any(), recordID, &service.UpdateOptions{
 				Title: "Updated Title",
-			}).Return(&model.Record{
+			}).Return(&model.Organisation{
 				Title: "Updated Title",
 			}, nil),
 			wantStatus: http.StatusOK,
 			wantErr:    false,
 		},
 		{
-			name: "return invalid title after updating record",
+			name: "return invalid title after updating organisation",
 			args: args{
 				w: httptest.NewRecorder(),
 				r: func() *http.Request {
@@ -83,7 +83,7 @@ func TestUpdateHandler_ServeHTTP(t *testing.T) {
 			},
 			expectation: environment.service.EXPECT().Update(gomock.Any(), recordID, &service.UpdateOptions{
 				Title: "Updated Title",
-			}).Return(&model.Record{
+			}).Return(&model.Organisation{
 				Title: "Wrong Title",
 			}, nil),
 			validation: func(r *Response) error {

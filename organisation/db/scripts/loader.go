@@ -7,12 +7,12 @@ import (
 
 	_ "ariga.io/atlas-go-sdk/recordriver"
 	"ariga.io/atlas-provider-gorm/gormschema"
-	"github.com/mrinalwahal/boilerplate/record/model"
+	"github.com/mrinalwahal/boilerplate/organisation/model"
 )
 
 // Define the models to generate migrations for.
 var models = []any{
-	&model.Record{},
+	&model.Organisation{},
 }
 
 func main() {

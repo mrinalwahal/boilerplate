@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/mrinalwahal/boilerplate/record/model"
+	"github.com/mrinalwahal/boilerplate/organisation/model"
 	"go.uber.org/mock/gomock"
 )
 
@@ -26,7 +26,7 @@ func TestListHandler_ServeHTTP(t *testing.T) {
 		// The name of our test.
 		// This will be used to identify the test in the output.
 		//
-		// Example: "list all records"
+		// Example: "list all organisations"
 		name string
 
 		// The arguments that we will pass to the function.
@@ -49,72 +49,72 @@ func TestListHandler_ServeHTTP(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "list all record",
+			name: "list all organisation",
 			args: args{
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest(http.MethodPost, "/", nil),
 			},
-			expectation: config.service.EXPECT().List(gomock.Any(), gomock.Any()).Return([]*model.Record{
+			expectation: config.service.EXPECT().List(gomock.Any(), gomock.Any()).Return([]*model.Organisation{
 				{
-					Title: "Record 1",
+					Title: "Organisation 1",
 				},
 			}, nil),
 			validation: func(r *Response) error {
 				if r == nil {
 					return fmt.Errorf("expected a response, got nil")
 				}
-				records := r.Data.([]interface{})
-				if len(records) < 1 {
-					return fmt.Errorf("expected at least 1 record, got %d", len(records))
+				organisations := r.Data.([]interface{})
+				if len(organisations) < 1 {
+					return fmt.Errorf("expected at least 1 organisation, got %d", len(organisations))
 				}
 				return nil
 			},
 			want: http.StatusOK,
 		},
 		{
-			name: "list only 1 record",
+			name: "list only 1 organisation",
 			args: args{
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest(http.MethodPost, "/", bytes.NewBufferString(`{"limit":1}`)),
 			},
-			expectation: config.service.EXPECT().List(gomock.Any(), gomock.Any()).Return([]*model.Record{
+			expectation: config.service.EXPECT().List(gomock.Any(), gomock.Any()).Return([]*model.Organisation{
 				{
-					Title: "Record 1",
+					Title: "Organisation 1",
 				},
 			}, nil),
 			validation: func(r *Response) error {
 				if r == nil {
 					return fmt.Errorf("expected a response, got nil")
 				}
-				records := r.Data.([]interface{})
-				if len(records) != 1 {
-					return fmt.Errorf("expected only 1 record, got %d", len(records))
+				organisations := r.Data.([]interface{})
+				if len(organisations) != 1 {
+					return fmt.Errorf("expected only 1 organisation, got %d", len(organisations))
 				}
 				return nil
 			},
 			want: http.StatusOK,
 		},
 		{
-			name: "return all records while requesting only 1 record",
+			name: "return all organisations while requesting only 1 organisation",
 			args: args{
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest(http.MethodGet, "/", bytes.NewBufferString(`{"limit":1}`)),
 			},
-			expectation: config.service.EXPECT().List(gomock.Any(), gomock.Any()).Return([]*model.Record{
+			expectation: config.service.EXPECT().List(gomock.Any(), gomock.Any()).Return([]*model.Organisation{
 				{
-					Title: "Record 1",
+					Title: "Organisation 1",
 				},
 				{
-					Title: "Record 2",
+					Title: "Organisation 2",
 				},
 			}, nil),
 			validation: func(r *Response) error {
 				if r == nil {
 					return fmt.Errorf("expected a response, got nil")
 				}
-				records := r.Data.([]interface{})
-				if len(records) != 1 {
-					return fmt.Errorf("expected only 1 record, got %d", len(records))
+				organisations := r.Data.([]interface{})
+				if len(organisations) != 1 {
+					return fmt.Errorf("expected only 1 organisation, got %d", len(organisations))
 				}
 				return nil
 			},

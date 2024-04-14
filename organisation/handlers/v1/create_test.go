@@ -10,9 +10,9 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/mrinalwahal/boilerplate/organisation/model"
+	"github.com/mrinalwahal/boilerplate/organisation/service"
 	"github.com/mrinalwahal/boilerplate/pkg/middleware"
-	"github.com/mrinalwahal/boilerplate/record/model"
-	"github.com/mrinalwahal/boilerplate/record/service"
 	"go.uber.org/mock/gomock"
 )
 
@@ -51,7 +51,7 @@ func TestCreateHandler_ServeHTTP(t *testing.T) {
 		})
 
 		// Initialize test request and response recorder.
-		r := httptest.NewRequest(http.MethodPost, "/v1/records", nil)
+		r := httptest.NewRequest(http.MethodPost, "/v1/organisations", nil)
 		w := httptest.NewRecorder()
 
 		// The service layer should ideally not be expecting any calls to reach it.
@@ -74,14 +74,14 @@ func TestCreateHandler_ServeHTTP(t *testing.T) {
 		})
 
 		body, err := json.Marshal(CreateOptions{
-			Title: "Test Record",
+			Title: "Test Organisation",
 		})
 		if err != nil {
 			t.Fatalf("failed to marshal the dummy body for request: %v", err)
 		}
 
 		// Initialize test request and response recorder.
-		r := httptest.NewRequest(http.MethodPost, "/v1/records", bytes.NewBuffer(body))
+		r := httptest.NewRequest(http.MethodPost, "/v1/organisations", bytes.NewBuffer(body))
 		w := httptest.NewRecorder()
 
 		// The service layer should ideally return an error because the JWT claims are missing.
@@ -104,7 +104,7 @@ func TestCreateHandler_ServeHTTP(t *testing.T) {
 		})
 
 		options := CreateOptions{
-			Title: "Test Record",
+			Title: "Test Organisation",
 		}
 		body, err := json.Marshal(options)
 		if err != nil {
@@ -112,7 +112,7 @@ func TestCreateHandler_ServeHTTP(t *testing.T) {
 		}
 
 		// Initialize test request and response recorder.
-		r := httptest.NewRequest(http.MethodPost, "/v1/records", bytes.NewBuffer(body))
+		r := httptest.NewRequest(http.MethodPost, "/v1/organisations", bytes.NewBuffer(body))
 		w := httptest.NewRecorder()
 
 		// Set the JWT claims in the request context.
@@ -121,13 +121,13 @@ func TestCreateHandler_ServeHTTP(t *testing.T) {
 			XUserID: user_id,
 		}))
 
-		// The service layer is expected to return a record.
-		config.service.EXPECT().Create(gomock.Any(), gomock.Any()).Return(&model.Record{
+		// The service layer is expected to return a organisation.
+		config.service.EXPECT().Create(gomock.Any(), gomock.Any()).Return(&model.Organisation{
 			Base: model.Base{
 				ID: uuid.New(),
 			},
-			Title:  options.Title,
-			UserID: user_id,
+			Title:   options.Title,
+			OwnerID: user_id,
 		}, nil).Times(1)
 
 		// Serve the request.

@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/mrinalwahal/boilerplate/organisation/model"
 	"github.com/mrinalwahal/boilerplate/pkg/middleware"
-	"github.com/mrinalwahal/boilerplate/record/model"
 	"gorm.io/gorm"
 )
 
@@ -41,8 +41,8 @@ type sqldb struct {
 	conn *gorm.DB
 }
 
-// Create operation creates a new record in the database.
-func (db *sqldb) Create(ctx context.Context, options *CreateOptions) (*model.Record, error) {
+// Create operation creates a new organisation in the database.
+func (db *sqldb) Create(ctx context.Context, options *CreateOptions) (*model.Organisation, error) {
 	txn := db.conn.WithContext(ctx)
 	if options == nil {
 		return nil, ErrInvalidOptions
@@ -56,9 +56,9 @@ func (db *sqldb) Create(ctx context.Context, options *CreateOptions) (*model.Rec
 	//
 
 	// Prepare the payload we have to send to the database transaction.
-	var payload model.Record
+	var payload model.Organisation
 	payload.Title = options.Title
-	payload.UserID = options.UserID
+	payload.OwnerID = options.OwnerID
 
 	// Execute the transaction.
 	result := txn.Create(&payload)
@@ -68,8 +68,8 @@ func (db *sqldb) Create(ctx context.Context, options *CreateOptions) (*model.Rec
 	return &payload, nil
 }
 
-// List operation fetches a list of records from the database.
-func (db *sqldb) List(ctx context.Context, options *ListOptions) ([]*model.Record, error) {
+// List operation fetches a list of organisations from the database.
+func (db *sqldb) List(ctx context.Context, options *ListOptions) ([]*model.Organisation, error) {
 	txn := db.conn.WithContext(ctx)
 	if options == nil {
 		options = &ListOptions{}
@@ -82,13 +82,13 @@ func (db *sqldb) List(ctx context.Context, options *ListOptions) ([]*model.Recor
 	claims, exists := ctx.Value(middleware.XJWTClaims).(middleware.JWTClaims)
 	if exists {
 
-		// 1. Only the user who created the record can list it.
-		txn = txn.Where(&model.Record{
-			UserID: claims.XUserID,
+		// 1. Only the user who created the organisation can list it.
+		txn = txn.Where(&model.Organisation{
+			OwnerID: claims.XUserID,
 		})
 	}
 
-	var payload []*model.Record
+	var payload []*model.Organisation
 
 	query := txn
 	if options.Limit > 0 {
@@ -101,7 +101,7 @@ func (db *sqldb) List(ctx context.Context, options *ListOptions) ([]*model.Recor
 		query = query.Order(options.OrderBy + " " + options.OrderDirection)
 	}
 	if options.Title != "" {
-		query = query.Where(&model.Record{
+		query = query.Where(&model.Organisation{
 			Title: options.Title,
 		})
 	}
@@ -112,8 +112,8 @@ func (db *sqldb) List(ctx context.Context, options *ListOptions) ([]*model.Recor
 	return payload, nil
 }
 
-// Get operation fetches a record from the database.
-func (db *sqldb) Get(ctx context.Context, ID uuid.UUID) (*model.Record, error) {
+// Get operation fetches a organisation from the database.
+func (db *sqldb) Get(ctx context.Context, ID uuid.UUID) (*model.Organisation, error) {
 	txn := db.conn.WithContext(ctx)
 	if ID == uuid.Nil {
 		return nil, ErrInvalidRecordID
@@ -123,13 +123,13 @@ func (db *sqldb) Get(ctx context.Context, ID uuid.UUID) (*model.Record, error) {
 	claims, exists := ctx.Value(middleware.XJWTClaims).(middleware.JWTClaims)
 	if exists {
 
-		// 1. Only the user who created the record can get it.
-		txn = txn.Where(&model.Record{
-			UserID: claims.XUserID,
+		// 1. Only the user who created the organisation can get it.
+		txn = txn.Where(&model.Organisation{
+			OwnerID: claims.XUserID,
 		})
 	}
 
-	var payload model.Record
+	var payload model.Organisation
 	payload.ID = ID
 	result := txn.First(&payload)
 	if result.Error != nil {
@@ -138,8 +138,8 @@ func (db *sqldb) Get(ctx context.Context, ID uuid.UUID) (*model.Record, error) {
 	return &payload, nil
 }
 
-// Update operation updates a record in the database.
-func (db *sqldb) Update(ctx context.Context, id uuid.UUID, options *UpdateOptions) (*model.Record, error) {
+// Update operation updates a organisation in the database.
+func (db *sqldb) Update(ctx context.Context, id uuid.UUID, options *UpdateOptions) (*model.Organisation, error) {
 	txn := db.conn.WithContext(ctx)
 	if id == uuid.Nil {
 		return nil, ErrInvalidRecordID
@@ -155,13 +155,13 @@ func (db *sqldb) Update(ctx context.Context, id uuid.UUID, options *UpdateOption
 	claims, exists := ctx.Value(middleware.XJWTClaims).(middleware.JWTClaims)
 	if exists {
 
-		// 1. Only the user who created the record can update it.
-		txn = txn.Where(&model.Record{
-			UserID: claims.XUserID,
+		// 1. Only the user who created the organisation can update it.
+		txn = txn.Where(&model.Organisation{
+			OwnerID: claims.XUserID,
 		})
 	}
 
-	var payload model.Record
+	var payload model.Organisation
 	payload.ID = id
 	if result := txn.Model(&payload).Updates(options); result.Error != nil {
 		return nil, result.Error
@@ -169,7 +169,7 @@ func (db *sqldb) Update(ctx context.Context, id uuid.UUID, options *UpdateOption
 	return db.Get(ctx, id)
 }
 
-// Delete operation deletes a record from the database.
+// Delete operation deletes a organisation from the database.
 func (db *sqldb) Delete(ctx context.Context, ID uuid.UUID) error {
 	txn := db.conn.WithContext(ctx)
 	if ID == uuid.Nil {
@@ -180,13 +180,13 @@ func (db *sqldb) Delete(ctx context.Context, ID uuid.UUID) error {
 	claims, exists := ctx.Value(middleware.XJWTClaims).(middleware.JWTClaims)
 	if exists {
 
-		// 1. Only the user who created the record can delete it.
-		txn = txn.Where(&model.Record{
-			UserID: claims.XUserID,
+		// 1. Only the user who created the organisation can delete it.
+		txn = txn.Where(&model.Organisation{
+			OwnerID: claims.XUserID,
 		})
 	}
 
-	var payload model.Record
+	var payload model.Organisation
 	payload.ID = ID
 	result := txn.Delete(&payload)
 	if result.Error != nil {

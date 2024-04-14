@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/mrinalwahal/boilerplate/record/model"
+	"github.com/mrinalwahal/boilerplate/organisation/model"
 	"go.uber.org/mock/gomock"
 )
 
@@ -17,7 +17,7 @@ func TestGetHandler_ServeHTTP(t *testing.T) {
 	// Setup the test environment.
 	environment := configure(t)
 
-	// Test UUID of the record.
+	// Test UUID of the organisation.
 	recordID := uuid.New()
 
 	type args struct {
@@ -29,7 +29,7 @@ func TestGetHandler_ServeHTTP(t *testing.T) {
 		// The name of our test.
 		// This will be used to identify the test in the output.
 		//
-		// Example: "get a record"
+		// Example: "get a organisation"
 		name string
 
 		// The arguments that we will pass to the function.
@@ -52,7 +52,7 @@ func TestGetHandler_ServeHTTP(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "get record",
+			name: "get organisation",
 			args: args{
 				w: httptest.NewRecorder(),
 				r: func() *http.Request {
@@ -61,11 +61,11 @@ func TestGetHandler_ServeHTTP(t *testing.T) {
 					return req
 				}(),
 			},
-			expectation: environment.service.EXPECT().Get(gomock.Any(), gomock.Any()).Return(&model.Record{
+			expectation: environment.service.EXPECT().Get(gomock.Any(), gomock.Any()).Return(&model.Organisation{
 				Base: model.Base{
 					ID: recordID,
 				},
-				Title: "Record 1",
+				Title: "Organisation 1",
 			}, nil),
 			validation: func(res *Response) error {
 				if res.Data == nil {

@@ -5,7 +5,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/mrinalwahal/boilerplate/model"
+	model "github.com/mrinalwahal/boilerplate/record/model"
 )
 
 // DB interface declares the signature of the database layer.

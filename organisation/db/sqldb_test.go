@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/mrinalwahal/boilerplate/organisation/model"
 	"github.com/mrinalwahal/boilerplate/pkg/middleware"
-	"github.com/mrinalwahal/boilerplate/record/model"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -29,7 +29,7 @@ func configure(t *testing.T) *testsqldbconfig {
 	}
 
 	// Migrate the schema.
-	if err := conn.AutoMigrate(&model.Record{}); err != nil {
+	if err := conn.AutoMigrate(&model.Organisation{}); err != nil {
 		t.Fatalf("failed to migrate the schema: %v", err)
 	}
 
@@ -90,7 +90,7 @@ func Test_Database_Create(t *testing.T) {
 		conn: config.conn,
 	}
 
-	t.Run("create record with nil options", func(t *testing.T) {
+	t.Run("create organisation with nil options", func(t *testing.T) {
 
 		_, err := db.Create(context.Background(), nil)
 		if err == nil || err != ErrInvalidOptions {
@@ -98,11 +98,11 @@ func Test_Database_Create(t *testing.T) {
 		}
 	})
 
-	t.Run("create record with invalid options", func(t *testing.T) {
+	t.Run("create organisation with invalid options", func(t *testing.T) {
 
 		options := CreateOptions{
-			Title:  "",
-			UserID: uuid.Nil,
+			Title:   "",
+			OwnerID: uuid.Nil,
 		}
 
 		_, err := db.Create(context.Background(), &options)
@@ -111,20 +111,20 @@ func Test_Database_Create(t *testing.T) {
 		}
 	})
 
-	t.Run("create record with valid options", func(t *testing.T) {
+	t.Run("create organisation with valid options", func(t *testing.T) {
 
 		options := CreateOptions{
-			Title:  "Test Record",
-			UserID: uuid.New(),
+			Title:   "Test Organisation",
+			OwnerID: uuid.New(),
 		}
 
-		record, err := db.Create(context.Background(), &options)
+		organisation, err := db.Create(context.Background(), &options)
 		if err != nil {
-			t.Fatalf("failed to create record: %v", err)
+			t.Fatalf("failed to create organisation: %v", err)
 		}
 
-		if record.Title != options.Title {
-			t.Fatalf("expected record title to be '%s', got '%s'", options.Title, record.Title)
+		if organisation.Title != options.Title {
+			t.Fatalf("expected organisation title to be '%s', got '%s'", options.Title, organisation.Title)
 		}
 	})
 }
@@ -141,32 +141,32 @@ func Test_Database_List(t *testing.T) {
 
 	ctx := context.Background()
 
-	// Seed the database with some records.
+	// Seed the database with some organisations.
 	for i := 0; i < 5; i++ {
 		_, err := db.Create(ctx, &CreateOptions{
-			Title:  fmt.Sprintf("Record %d", i),
-			UserID: uuid.New(),
+			Title:   fmt.Sprintf("Organisation %d", i),
+			OwnerID: uuid.New(),
 		})
 		if err != nil {
 			t.Fatalf("failed to seed the database: %v", err)
 		}
 	}
 
-	t.Run("list records with nil options", func(t *testing.T) {
+	t.Run("list organisations with nil options", func(t *testing.T) {
 
-		records, err := db.List(ctx, nil)
+		organisations, err := db.List(ctx, nil)
 		if err != nil {
-			t.Fatalf("failed to list records: %v", err)
+			t.Fatalf("failed to list organisations: %v", err)
 		}
 
-		if len(records) < 1 {
-			t.Fatalf("expected at least 1 record, got %d", len(records))
+		if len(organisations) < 1 {
+			t.Fatalf("expected at least 1 organisation, got %d", len(organisations))
 		}
 	})
 
-	t.Run("list records with invalid options", func(t *testing.T) {
+	t.Run("list organisations with invalid options", func(t *testing.T) {
 
-		records, err := db.List(ctx, &ListOptions{
+		organisations, err := db.List(ctx, &ListOptions{
 			Skip:  -1,
 			Limit: -1,
 		})
@@ -174,109 +174,109 @@ func Test_Database_List(t *testing.T) {
 			t.Errorf("service.List() error = %v, wantErr %v", err, true)
 		}
 
-		if len(records) != 0 {
-			t.Errorf("expected 0 records, got %d", len(records))
+		if len(organisations) != 0 {
+			t.Errorf("expected 0 organisations, got %d", len(organisations))
 		}
 	})
 
-	t.Run("list records with valid options", func(t *testing.T) {
+	t.Run("list organisations with valid options", func(t *testing.T) {
 
-		records, err := db.List(ctx, &ListOptions{})
+		organisations, err := db.List(ctx, &ListOptions{})
 		if err != nil {
-			t.Fatalf("failed to list records: %v", err)
+			t.Fatalf("failed to list organisations: %v", err)
 		}
 
-		if len(records) < 1 {
-			t.Fatalf("expected at least 1 record, got %d", len(records))
+		if len(organisations) < 1 {
+			t.Fatalf("expected at least 1 organisation, got %d", len(organisations))
 		}
 	})
 
-	t.Run("list records as a different user than the one who created them", func(t *testing.T) {
+	t.Run("list organisations as a different user than the one who created them", func(t *testing.T) {
 
 		// Add JWT claims to the context.
 		ctx := context.WithValue(context.Background(), middleware.XJWTClaims, middleware.JWTClaims{
 			XUserID: uuid.New(),
 		})
 
-		records, err := db.List(ctx, &ListOptions{})
+		organisations, err := db.List(ctx, &ListOptions{})
 		if err != nil {
-			t.Fatalf("failed to list records: %v", err)
+			t.Fatalf("failed to list organisations: %v", err)
 		}
 
-		if len(records) != 0 {
-			t.Fatalf("expected 0 records, got %d", len(records))
+		if len(organisations) != 0 {
+			t.Fatalf("expected 0 organisations, got %d", len(organisations))
 		}
 	})
 
 	t.Run("list w/ title filter", func(t *testing.T) {
 
-		records, err := db.List(ctx, &ListOptions{
-			Title: "Record 1",
+		organisations, err := db.List(ctx, &ListOptions{
+			Title: "Organisation 1",
 		})
 		if err != nil {
-			t.Fatalf("failed to list records: %v", err)
+			t.Fatalf("failed to list organisations: %v", err)
 		}
 
-		if len(records) < 1 {
-			t.Fatalf("expected at least 1 record, got %d", len(records))
+		if len(organisations) < 1 {
+			t.Fatalf("expected at least 1 organisation, got %d", len(organisations))
 		}
 	})
 
 	t.Run("list w/ skip filter", func(t *testing.T) {
 
-		records, err := db.List(ctx, &ListOptions{
+		organisations, err := db.List(ctx, &ListOptions{
 			Skip: 2,
 		})
 		if err != nil {
-			t.Fatalf("failed to list records: %v", err)
+			t.Fatalf("failed to list organisations: %v", err)
 		}
 
-		if len(records) != 3 {
-			t.Fatalf("expected 3 records, got %d", len(records))
+		if len(organisations) != 3 {
+			t.Fatalf("expected 3 organisations, got %d", len(organisations))
 		}
 	})
 
 	t.Run("list w/ limit filter", func(t *testing.T) {
 
-		records, err := db.List(ctx, &ListOptions{
+		organisations, err := db.List(ctx, &ListOptions{
 			Limit: 2,
 		})
 		if err != nil {
-			t.Fatalf("failed to list records: %v", err)
+			t.Fatalf("failed to list organisations: %v", err)
 		}
 
-		if len(records) != 2 {
-			t.Fatalf("expected 2 records, got %d", len(records))
+		if len(organisations) != 2 {
+			t.Fatalf("expected 2 organisations, got %d", len(organisations))
 		}
 	})
 
 	t.Run("list w/ orderBy filter", func(t *testing.T) {
 
-		records, err := db.List(ctx, &ListOptions{
+		organisations, err := db.List(ctx, &ListOptions{
 			OrderBy: "title",
 		})
 		if err != nil {
-			t.Fatalf("failed to list records: %v", err)
+			t.Fatalf("failed to list organisations: %v", err)
 		}
 
-		if records[3].Title != "Record 3" {
-			t.Logf("received: %v", records[3])
-			t.Fatalf("expected third record to be 'Record 4', got '%s'", records[3].Title)
+		if organisations[3].Title != "Organisation 3" {
+			t.Logf("received: %v", organisations[3])
+			t.Fatalf("expected third organisation to be 'Organisation 4', got '%s'", organisations[3].Title)
 		}
 	})
 
 	t.Run("list w/ orderBy and orderDirection filter", func(t *testing.T) {
 
-		records, err := db.List(ctx, &ListOptions{
+		organisations, err := db.List(ctx, &ListOptions{
 			OrderBy:        "title",
 			OrderDirection: "desc",
 		})
 		if err != nil {
-			t.Fatalf("failed to list records: %v", err)
+			t.Fatalf("failed to list organisations: %v", err)
 		}
 
-		if records[0].Title != "Record 4" {
-			t.Fatalf("expected first record to be 'Record 4', got '%s'", records[0].Title)
+		if organisations[0].Title != "Organisation 4" {
+			t.Fatalf("expected first organisation to be 'Organisation 4', got '%s'", organisations[0].Title)
 		}
 	})
 }
@@ -291,10 +291,10 @@ func Test_Database_Get(t *testing.T) {
 		conn: config.conn,
 	}
 
-	// Seed the database with sample records.
+	// Seed the database with sample organisations.
 	options := CreateOptions{
-		Title:  "Test Record",
-		UserID: uuid.New(),
+		Title:   "Test Organisation",
+		OwnerID: uuid.New(),
 	}
 
 	ctx := context.Background()
@@ -304,7 +304,7 @@ func Test_Database_Get(t *testing.T) {
 		t.Fatalf("failed to seed the database: %v", err)
 	}
 
-	t.Run("get record with nil ID", func(t *testing.T) {
+	t.Run("get organisation with nil ID", func(t *testing.T) {
 
 		_, err := db.Get(ctx, uuid.Nil)
 		if err == nil {
@@ -312,19 +312,19 @@ func Test_Database_Get(t *testing.T) {
 		}
 	})
 
-	t.Run("get record with valid ID", func(t *testing.T) {
+	t.Run("get organisation with valid ID", func(t *testing.T) {
 
-		record, err := db.Get(ctx, seed.ID)
+		organisation, err := db.Get(ctx, seed.ID)
 		if err != nil {
-			t.Fatalf("failed to get record: %v", err)
+			t.Fatalf("failed to get organisation: %v", err)
 		}
 
-		if record.ID != seed.ID {
-			t.Fatalf("expected retrieved record to equal seed, got = %v", record)
+		if organisation.ID != seed.ID {
+			t.Fatalf("expected retrieved organisation to equal seed, got = %v", organisation)
 		}
 	})
 
-	t.Run("get record as a different user than the one who created it", func(t *testing.T) {
+	t.Run("get organisation as a different user than the one who created it", func(t *testing.T) {
 
 		// Add JWT claims to the context.
 		ctx := context.WithValue(context.Background(), middleware.XJWTClaims, middleware.JWTClaims{
@@ -348,10 +348,10 @@ func Test_Database_Update(t *testing.T) {
 		conn: config.conn,
 	}
 
-	// Seed the database with sample records.
+	// Seed the database with sample organisations.
 	options := CreateOptions{
-		Title:  "Test Record",
-		UserID: uuid.New(),
+		Title:   "Test Organisation",
+		OwnerID: uuid.New(),
 	}
 
 	ctx := context.Background()
@@ -361,17 +361,17 @@ func Test_Database_Update(t *testing.T) {
 		t.Fatalf("failed to seed the database: %v", err)
 	}
 
-	t.Run("update record with nil ID", func(t *testing.T) {
+	t.Run("update organisation with nil ID", func(t *testing.T) {
 
 		_, err := db.Update(ctx, uuid.Nil, &UpdateOptions{
-			Title: "Updated Record",
+			Title: "Updated Organisation",
 		})
 		if err == nil {
 			t.Errorf("service.Update() error = %v, wantErr %v", err, true)
 		}
 	})
 
-	t.Run("update record with nil options", func(t *testing.T) {
+	t.Run("update organisation with nil options", func(t *testing.T) {
 
 		_, err := db.Update(ctx, seed.ID, nil)
 		if err == nil {
@@ -379,7 +379,7 @@ func Test_Database_Update(t *testing.T) {
 		}
 	})
 
-	t.Run("update record with invalid options", func(t *testing.T) {
+	t.Run("update organisation with invalid options", func(t *testing.T) {
 
 		_, err := db.Update(ctx, seed.ID, &UpdateOptions{
 			Title: "",
@@ -389,22 +389,22 @@ func Test_Database_Update(t *testing.T) {
 		}
 	})
 
-	t.Run("update record with valid options", func(t *testing.T) {
+	t.Run("update organisation with valid options", func(t *testing.T) {
 
-		updatedTitle := "Updated Record"
-		record, err := db.Update(ctx, seed.ID, &UpdateOptions{
+		updatedTitle := "Updated Organisation"
+		organisation, err := db.Update(ctx, seed.ID, &UpdateOptions{
 			Title: updatedTitle,
 		})
 		if err != nil {
-			t.Fatalf("failed to update record: %v", err)
+			t.Fatalf("failed to update organisation: %v", err)
 		}
 
-		if record.Title != updatedTitle {
-			t.Fatalf("expected record title to be 'Updated Record', got '%s'", record.Title)
+		if organisation.Title != updatedTitle {
+			t.Fatalf("expected organisation title to be 'Updated Organisation', got '%s'", organisation.Title)
 		}
 	})
 
-	t.Run("update record as a different user than the one who created it", func(t *testing.T) {
+	t.Run("update organisation as a different user than the one who created it", func(t *testing.T) {
 
 		// Add JWT claims to the context.
 		ctx := context.WithValue(context.Background(), middleware.XJWTClaims, middleware.JWTClaims{
@@ -412,7 +412,7 @@ func Test_Database_Update(t *testing.T) {
 		})
 
 		_, err := db.Update(ctx, seed.ID, &UpdateOptions{
-			Title: "Updated Record",
+			Title: "Updated Organisation",
 		})
 		if err == nil {
 			t.Errorf("service.Update() error = %v, wantErr %v", err, true)
@@ -432,7 +432,7 @@ func Test_Database_Delete(t *testing.T) {
 
 	ctx := context.Background()
 
-	t.Run("delete record with nil ID", func(t *testing.T) {
+	t.Run("delete organisation with nil ID", func(t *testing.T) {
 
 		err := db.Delete(ctx, uuid.Nil)
 		if err == nil {
@@ -440,26 +440,26 @@ func Test_Database_Delete(t *testing.T) {
 		}
 	})
 
-	t.Run("delete record with valid ID", func(t *testing.T) {
+	t.Run("delete organisation with valid ID", func(t *testing.T) {
 
 		seed, err := db.Create(ctx, &CreateOptions{
-			Title:  "Test Record",
-			UserID: uuid.New(),
+			Title:   "Test Organisation",
+			OwnerID: uuid.New(),
 		})
 		if err != nil {
 			t.Fatalf("failed to seed the database: %v", err)
 		}
 
 		if err := db.Delete(ctx, seed.ID); err != nil {
-			t.Fatalf("failed to delete record: %v", err)
+			t.Fatalf("failed to delete organisation: %v", err)
 		}
 	})
 
-	t.Run("delete record as a different user than the one who created it", func(t *testing.T) {
+	t.Run("delete organisation as a different user than the one who created it", func(t *testing.T) {
 
 		seed, err := db.Create(ctx, &CreateOptions{
-			Title:  "Test Record",
-			UserID: uuid.New(),
+			Title:   "Test Organisation",
+			OwnerID: uuid.New(),
 		})
 		if err != nil {
 			t.Fatalf("failed to seed the database: %v", err)

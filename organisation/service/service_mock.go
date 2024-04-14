@@ -14,7 +14,7 @@ import (
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
-	model "github.com/mrinalwahal/boilerplate/record/model"
+	model "github.com/mrinalwahal/boilerplate/organisation/model"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -42,10 +42,10 @@ func (m *MockService) EXPECT() *MockServiceMockRecorder {
 }
 
 // Create mocks base method.
-func (m *MockService) Create(arg0 context.Context, arg1 *CreateOptions) (*model.Record, error) {
+func (m *MockService) Create(arg0 context.Context, arg1 *CreateOptions) (*model.Organisation, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Create", arg0, arg1)
-	ret0, _ := ret[0].(*model.Record)
+	ret0, _ := ret[0].(*model.Organisation)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -71,10 +71,10 @@ func (mr *MockServiceMockRecorder) Delete(arg0, arg1 any) *gomock.Call {
 }
 
 // Get mocks base method.
-func (m *MockService) Get(arg0 context.Context, arg1 uuid.UUID) (*model.Record, error) {
+func (m *MockService) Get(arg0 context.Context, arg1 uuid.UUID) (*model.Organisation, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Get", arg0, arg1)
-	ret0, _ := ret[0].(*model.Record)
+	ret0, _ := ret[0].(*model.Organisation)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -86,10 +86,10 @@ func (mr *MockServiceMockRecorder) Get(arg0, arg1 any) *gomock.Call {
 }
 
 // List mocks base method.
-func (m *MockService) List(arg0 context.Context, arg1 *ListOptions) ([]*model.Record, error) {
+func (m *MockService) List(arg0 context.Context, arg1 *ListOptions) ([]*model.Organisation, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "List", arg0, arg1)
-	ret0, _ := ret[0].([]*model.Record)
+	ret0, _ := ret[0].([]*model.Organisation)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -100,11 +100,35 @@ func (mr *MockServiceMockRecorder) List(arg0, arg1 any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockService)(nil).List), arg0, arg1)
 }
 
+// Members mocks base method.
+func (m *MockService) Members() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Members")
+}
+
+// Members indicates an expected call of Members.
+func (mr *MockServiceMockRecorder) Members() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Members", reflect.TypeOf((*MockService)(nil).Members))
+}
+
+// Roles mocks base method.
+func (m *MockService) Roles() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Roles")
+}
+
+// Roles indicates an expected call of Roles.
+func (mr *MockServiceMockRecorder) Roles() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Roles", reflect.TypeOf((*MockService)(nil).Roles))
+}
+
 // Update mocks base method.
-func (m *MockService) Update(arg0 context.Context, arg1 uuid.UUID, arg2 *UpdateOptions) (*model.Record, error) {
+func (m *MockService) Update(arg0 context.Context, arg1 uuid.UUID, arg2 *UpdateOptions) (*model.Organisation, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Update", arg0, arg1, arg2)
-	ret0, _ := ret[0].(*model.Record)
+	ret0, _ := ret[0].(*model.Organisation)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

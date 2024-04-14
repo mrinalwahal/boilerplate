@@ -6,16 +6,19 @@ import (
 	"log/slog"
 
 	"github.com/google/uuid"
-	"github.com/mrinalwahal/boilerplate/record/db"
-	"github.com/mrinalwahal/boilerplate/record/model"
+	"github.com/mrinalwahal/boilerplate/organisation/db"
+	"github.com/mrinalwahal/boilerplate/organisation/model"
 )
 
 type Service interface {
-	Create(context.Context, *CreateOptions) (*model.Record, error)
-	List(context.Context, *ListOptions) ([]*model.Record, error)
-	Get(context.Context, uuid.UUID) (*model.Record, error)
-	Update(context.Context, uuid.UUID, *UpdateOptions) (*model.Record, error)
+	Create(context.Context, *CreateOptions) (*model.Organisation, error)
+	List(context.Context, *ListOptions) ([]*model.Organisation, error)
+	Get(context.Context, uuid.UUID) (*model.Organisation, error)
+	Update(context.Context, uuid.UUID, *UpdateOptions) (*model.Organisation, error)
 	Delete(context.Context, uuid.UUID) error
+
+	Members()
+	Roles()
 }
 
 type Config struct {
@@ -57,8 +60,8 @@ type service struct {
 	logger *slog.Logger
 }
 
-func (s *service) Create(ctx context.Context, options *CreateOptions) (*model.Record, error) {
-	s.logger.LogAttrs(ctx, slog.LevelDebug, "creating a new record",
+func (s *service) Create(ctx context.Context, options *CreateOptions) (*model.Organisation, error) {
+	s.logger.LogAttrs(ctx, slog.LevelDebug, "creating a new organisation",
 		slog.String("function", "create"),
 	)
 	if options == nil {
@@ -69,13 +72,13 @@ func (s *service) Create(ctx context.Context, options *CreateOptions) (*model.Re
 	}
 
 	return s.db.Create(ctx, &db.CreateOptions{
-		Title:  options.Title,
-		UserID: options.UserID,
+		Title:   options.Title,
+		OwnerID: options.OwnerID,
 	})
 }
 
-func (s *service) List(ctx context.Context, options *ListOptions) ([]*model.Record, error) {
-	s.logger.LogAttrs(ctx, slog.LevelDebug, "listing all records",
+func (s *service) List(ctx context.Context, options *ListOptions) ([]*model.Organisation, error) {
+	s.logger.LogAttrs(ctx, slog.LevelDebug, "listing all organisations",
 		slog.String("function", "list"),
 	)
 	if options == nil {
@@ -94,8 +97,8 @@ func (s *service) List(ctx context.Context, options *ListOptions) ([]*model.Reco
 	})
 }
 
-func (s *service) Get(ctx context.Context, ID uuid.UUID) (*model.Record, error) {
-	s.logger.LogAttrs(ctx, slog.LevelDebug, "retrieving a record",
+func (s *service) Get(ctx context.Context, ID uuid.UUID) (*model.Organisation, error) {
+	s.logger.LogAttrs(ctx, slog.LevelDebug, "retrieving a organisation",
 		slog.String("function", "get"),
 	)
 	if ID == uuid.Nil {
@@ -104,8 +107,8 @@ func (s *service) Get(ctx context.Context, ID uuid.UUID) (*model.Record, error) 
 	return s.db.Get(ctx, ID)
 }
 
-func (s *service) Update(ctx context.Context, ID uuid.UUID, options *UpdateOptions) (*model.Record, error) {
-	s.logger.LogAttrs(ctx, slog.LevelDebug, "updating a record",
+func (s *service) Update(ctx context.Context, ID uuid.UUID, options *UpdateOptions) (*model.Organisation, error) {
+	s.logger.LogAttrs(ctx, slog.LevelDebug, "updating a organisation",
 		slog.String("function", "update"),
 	)
 	if ID == uuid.Nil {
@@ -123,7 +126,7 @@ func (s *service) Update(ctx context.Context, ID uuid.UUID, options *UpdateOptio
 }
 
 func (s *service) Delete(ctx context.Context, ID uuid.UUID) error {
-	s.logger.LogAttrs(ctx, slog.LevelDebug, "deleting a record",
+	s.logger.LogAttrs(ctx, slog.LevelDebug, "deleting a organisation",
 		slog.String("function", "delete"),
 	)
 	if ID == uuid.Nil {
@@ -131,3 +134,7 @@ func (s *service) Delete(ctx context.Context, ID uuid.UUID) error {
 	}
 	return s.db.Delete(ctx, ID)
 }
+
+func (s *service) Members() {}
+
+func (s *service) Roles() {}
