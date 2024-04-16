@@ -67,6 +67,8 @@ func Logging(config *LoggingConfig) Middleware {
 				{Key: "hostname", Value: slog.StringValue(r.Host)},
 				{Key: "method", Value: slog.StringValue(r.Method)},
 				{Key: "path", Value: slog.StringValue(r.URL.Path)},
+				{Key: "remote_addr", Value: slog.StringValue(r.RemoteAddr)},
+				{Key: "msg", Value: slog.StringValue("http")},
 			}
 
 			if config.LogLatency {

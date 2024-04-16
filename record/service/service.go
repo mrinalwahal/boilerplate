@@ -66,8 +66,8 @@ type service struct {
 }
 
 // Create operation creates a new record in the service.
-func (service *service) Create(ctx context.Context, options *CreateOptions) (*model.Record, error) {
-	service.log.LogAttrs(ctx, slog.LevelDebug, "creating a new record",
+func (s *service) Create(ctx context.Context, options *CreateOptions) (*model.Record, error) {
+	s.log.LogAttrs(ctx, slog.LevelDebug, "creating a new record",
 		slog.String("function", "create"),
 	)
 	if options == nil {
@@ -77,19 +77,22 @@ func (service *service) Create(ctx context.Context, options *CreateOptions) (*mo
 		return nil, err
 	}
 
-	txn := service.db.WithContext(ctx)
+	txn := s.db.WithContext(ctx)
 
 	//
 	// This method has no Row Level Security (RLS) checks.
 	//
 
-	// Prepare the payload we have to send to the service transaction.
+	return s.create(txn, options)
+}
+
+// create executes the transaction on the database to create a new record.
+func (s *service) create(tx *gorm.DB, options *CreateOptions) (*model.Record, error) {
 	var payload model.Record
 	payload.Title = options.Title
 	payload.UserID = options.UserID
 
-	// Execute the transaction.
-	result := txn.Create(&payload)
+	result := tx.Create(&payload)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -97,8 +100,8 @@ func (service *service) Create(ctx context.Context, options *CreateOptions) (*mo
 }
 
 // List operation fetches a list of records from the service.
-func (service *service) List(ctx context.Context, options *ListOptions) ([]*model.Record, error) {
-	service.log.LogAttrs(ctx, slog.LevelDebug, "fetching records",
+func (s *service) List(ctx context.Context, options *ListOptions) ([]*model.Record, error) {
+	s.log.LogAttrs(ctx, slog.LevelDebug, "fetching records",
 		slog.String("function", "list"),
 	)
 	if options == nil {
@@ -108,7 +111,7 @@ func (service *service) List(ctx context.Context, options *ListOptions) ([]*mode
 		return nil, err
 	}
 
-	txn := service.db.WithContext(ctx)
+	txn := s.db.WithContext(ctx)
 
 	// If the request context contains JWT claims, apply Row Level Security (RLS) checks.
 	claims, exists := ctx.Value(middleware.XJWTClaims).(middleware.JWTClaims)
@@ -120,6 +123,11 @@ func (service *service) List(ctx context.Context, options *ListOptions) ([]*mode
 		})
 	}
 
+	return s.list(txn, options)
+}
+
+// list executes the transaction on the database to fetch a list of records.
+func (s *service) list(txn *gorm.DB, options *ListOptions) ([]*model.Record, error) {
 	var payload []*model.Record
 
 	query := txn
@@ -145,15 +153,15 @@ func (service *service) List(ctx context.Context, options *ListOptions) ([]*mode
 }
 
 // Get operation fetches a record from the service.
-func (service *service) Get(ctx context.Context, ID uuid.UUID) (*model.Record, error) {
-	service.log.LogAttrs(ctx, slog.LevelDebug, "fetching a record",
+func (s *service) Get(ctx context.Context, ID uuid.UUID) (*model.Record, error) {
+	s.log.LogAttrs(ctx, slog.LevelDebug, "fetching a record",
 		slog.String("function", "get"),
 	)
 	if ID == uuid.Nil {
 		return nil, ErrInvalidRecordID
 	}
 
-	txn := service.db.WithContext(ctx)
+	txn := s.db.WithContext(ctx)
 
 	// If the request context contains JWT claims, apply Row Level Security (RLS) checks.
 	claims, exists := ctx.Value(middleware.XJWTClaims).(middleware.JWTClaims)
@@ -165,8 +173,14 @@ func (service *service) Get(ctx context.Context, ID uuid.UUID) (*model.Record, e
 		})
 	}
 
+	return s.get(txn, ID)
+}
+
+// get executes the transaction on the database to fetch a record.
+func (s *service) get(txn *gorm.DB, ID uuid.UUID) (*model.Record, error) {
 	var payload model.Record
 	payload.ID = ID
+
 	result := txn.First(&payload)
 	if result.Error != nil {
 		return nil, result.Error
@@ -175,8 +189,8 @@ func (service *service) Get(ctx context.Context, ID uuid.UUID) (*model.Record, e
 }
 
 // Update operation updates a record in the service.
-func (service *service) Update(ctx context.Context, id uuid.UUID, options *UpdateOptions) (*model.Record, error) {
-	service.log.LogAttrs(ctx, slog.LevelDebug, "updating a record",
+func (s *service) Update(ctx context.Context, id uuid.UUID, options *UpdateOptions) (*model.Record, error) {
+	s.log.LogAttrs(ctx, slog.LevelDebug, "updating a record",
 		slog.String("function", "update"),
 	)
 	if id == uuid.Nil {
@@ -189,7 +203,7 @@ func (service *service) Update(ctx context.Context, id uuid.UUID, options *Updat
 		return nil, err
 	}
 
-	txn := service.db.WithContext(ctx)
+	txn := s.db.WithContext(ctx)
 
 	// If the request context contains JWT claims, apply Row Level Security (RLS) checks.
 	claims, exists := ctx.Value(middleware.XJWTClaims).(middleware.JWTClaims)
@@ -201,24 +215,33 @@ func (service *service) Update(ctx context.Context, id uuid.UUID, options *Updat
 		})
 	}
 
+	if err := s.update(txn, id, options); err != nil {
+		return nil, err
+	}
+	return s.Get(ctx, id)
+}
+
+// update executes the transaction on the database to update a record.
+func (s *service) update(txn *gorm.DB, id uuid.UUID, options *UpdateOptions) error {
 	var payload model.Record
 	payload.ID = id
+
 	if result := txn.Model(&payload).Updates(options); result.Error != nil {
-		return nil, result.Error
+		return result.Error
 	}
-	return service.Get(ctx, id)
+	return nil
 }
 
 // Delete operation deletes a record from the service.
-func (service *service) Delete(ctx context.Context, ID uuid.UUID) error {
-	service.log.LogAttrs(ctx, slog.LevelDebug, "deleting a record",
+func (s *service) Delete(ctx context.Context, ID uuid.UUID) error {
+	s.log.LogAttrs(ctx, slog.LevelDebug, "deleting a record",
 		slog.String("function", "delete"),
 	)
 	if ID == uuid.Nil {
 		return ErrInvalidRecordID
 	}
 
-	txn := service.db.WithContext(ctx)
+	txn := s.db.WithContext(ctx)
 
 	// If the request context contains JWT claims, apply Row Level Security (RLS) checks.
 	claims, exists := ctx.Value(middleware.XJWTClaims).(middleware.JWTClaims)
@@ -230,8 +253,14 @@ func (service *service) Delete(ctx context.Context, ID uuid.UUID) error {
 		})
 	}
 
+	return s.delete(txn, ID)
+}
+
+// delete executes the transaction on the database to delete a record.
+func (s *service) delete(txn *gorm.DB, ID uuid.UUID) error {
 	var payload model.Record
 	payload.ID = ID
+
 	result := txn.Delete(&payload)
 	if result.Error != nil {
 		return result.Error
