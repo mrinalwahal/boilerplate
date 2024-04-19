@@ -8,7 +8,7 @@ CREATE TABLE "public"."organisations" (
   "title" text NOT NULL,
   "user_id" uuid NOT NULL,
   PRIMARY KEY ("id"),
-  CONSTRAINT "chk_records_title" CHECK (length(title) > 0)
+  CONSTRAINT "chk_organisations_title" CHECK (length(title) > 0)
 );
 
 -- +goose Down

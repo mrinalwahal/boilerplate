@@ -18,7 +18,7 @@ func TestGetHandler_ServeHTTP(t *testing.T) {
 	environment := configure(t)
 
 	// Test UUID of the organisation.
-	recordID := uuid.New()
+	organisationID := uuid.New()
 
 	type args struct {
 		w http.ResponseWriter
@@ -57,13 +57,13 @@ func TestGetHandler_ServeHTTP(t *testing.T) {
 				w: httptest.NewRecorder(),
 				r: func() *http.Request {
 					req := httptest.NewRequest(http.MethodGet, "/", nil)
-					req.SetPathValue("id", recordID.String())
+					req.SetPathValue("id", organisationID.String())
 					return req
 				}(),
 			},
 			expectation: environment.service.EXPECT().Get(gomock.Any(), gomock.Any()).Return(&model.Organisation{
 				Base: model.Base{
-					ID: recordID,
+					ID: organisationID,
 				},
 				Title: "Organisation 1",
 			}, nil),

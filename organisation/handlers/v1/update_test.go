@@ -20,7 +20,7 @@ func TestUpdateHandler_ServeHTTP(t *testing.T) {
 	environment := configure(t)
 
 	// Test UUID of the organisation.
-	recordID := uuid.New()
+	organisationID := uuid.New()
 
 	type args struct {
 		w http.ResponseWriter
@@ -58,12 +58,12 @@ func TestUpdateHandler_ServeHTTP(t *testing.T) {
 			args: args{
 				w: httptest.NewRecorder(),
 				r: func() *http.Request {
-					req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/%s", recordID.String()), bytes.NewBufferString(`{"title": "Updated Title"}`))
-					req.SetPathValue("id", recordID.String())
+					req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/%s", organisationID.String()), bytes.NewBufferString(`{"title": "Updated Title"}`))
+					req.SetPathValue("id", organisationID.String())
 					return req
 				}(),
 			},
-			expectation: environment.service.EXPECT().Update(gomock.Any(), recordID, &service.UpdateOptions{
+			expectation: environment.service.EXPECT().Update(gomock.Any(), organisationID, &service.UpdateOptions{
 				Title: "Updated Title",
 			}).Return(&model.Organisation{
 				Title: "Updated Title",
@@ -76,12 +76,12 @@ func TestUpdateHandler_ServeHTTP(t *testing.T) {
 			args: args{
 				w: httptest.NewRecorder(),
 				r: func() *http.Request {
-					req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/%s", recordID.String()), bytes.NewBufferString(`{"title": "Updated Title"}`))
-					req.SetPathValue("id", recordID.String())
+					req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/%s", organisationID.String()), bytes.NewBufferString(`{"title": "Updated Title"}`))
+					req.SetPathValue("id", organisationID.String())
 					return req
 				}(),
 			},
-			expectation: environment.service.EXPECT().Update(gomock.Any(), recordID, &service.UpdateOptions{
+			expectation: environment.service.EXPECT().Update(gomock.Any(), organisationID, &service.UpdateOptions{
 				Title: "Updated Title",
 			}).Return(&model.Organisation{
 				Title: "Wrong Title",

@@ -50,7 +50,7 @@ func TestCreateHandler_ServeHTTP(t *testing.T) {
 			Logger:  config.log,
 		})
 
-		// Initialize test request and response recorder.
+		// Initialize test request and response organisationer.
 		r := httptest.NewRequest(http.MethodPost, "/v1/organisations", nil)
 		w := httptest.NewRecorder()
 
@@ -80,7 +80,7 @@ func TestCreateHandler_ServeHTTP(t *testing.T) {
 			t.Fatalf("failed to marshal the dummy body for request: %v", err)
 		}
 
-		// Initialize test request and response recorder.
+		// Initialize test request and response organisationer.
 		r := httptest.NewRequest(http.MethodPost, "/v1/organisations", bytes.NewBuffer(body))
 		w := httptest.NewRecorder()
 
@@ -111,7 +111,7 @@ func TestCreateHandler_ServeHTTP(t *testing.T) {
 			t.Fatalf("failed to marshal the dummy body for request: %v", err)
 		}
 
-		// Initialize test request and response recorder.
+		// Initialize test request and response organisationer.
 		r := httptest.NewRequest(http.MethodPost, "/v1/organisations", bytes.NewBuffer(body))
 		w := httptest.NewRecorder()
 

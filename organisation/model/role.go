@@ -21,7 +21,7 @@ type Role struct {
 
 	// Permissions this role has.
 	//
-	// Example: [{"operation": "create", "entity": "record"}, {"operation": "read", "entity": "member"}]
+	// Example: [{"operation": "create", "entity": "organisation"}, {"operation": "read", "entity": "member"}]
 	//
 	// It is a required field.
 	Permissions []Permission `json:"permissions" gorm:"not null;type:json"`
@@ -54,5 +54,5 @@ const (
 type Entity string
 
 const (
-	Record Entity = "record"
+	organisation Entity = "organisation"
 )

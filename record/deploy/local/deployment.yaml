@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: records-deployment
+  labels:
+    app: records
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: records
+  template:
+    metadata:
+      labels:
+        app: records
+    spec:
+      containers:
+      - name: records
+        image: docker.io/library/service:local
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: records-service
+spec:
+  # type: LoadBalancer
+  selector:
+    app: records
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: http
+

@@ -1,0 +1,22 @@
+env = "dev"
+port = "8080"
+
+# If you removed the database, the application will still run but it will initialize a new in-memory SQLite database everytime it starts.
+#[database]
+#engine = "postgres"
+#dsn = "host=127.0.0.1 user=postgres password=postgres dbname=organisations port=5432 sslmode=disable TimeZone=Asia/Kolkata"
+
+[authentication]
+method = "jwt"
+key = { algo = "HS256", key = "secret" }
+
+[logs]
+level = "debug"
+engine = "loki"
+address = "localhost:3100"
+
+# The meter section enables or disables metrics collection and sets the
+# exporter and endpoint for the collected metrics.
+[meter]
+exporter = "otlp"
+endpoint = "localhost:4318"

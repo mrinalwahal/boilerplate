@@ -86,19 +86,6 @@ func (s *service) Create(ctx context.Context, options *CreateOptions) (*model.Re
 	return s.create(txn, options)
 }
 
-// create executes the transaction on the database to create a new record.
-func (s *service) create(tx *gorm.DB, options *CreateOptions) (*model.Record, error) {
-	var payload model.Record
-	payload.Title = options.Title
-	payload.UserID = options.UserID
-
-	result := tx.Create(&payload)
-	if result.Error != nil {
-		return nil, result.Error
-	}
-	return &payload, nil
-}
-
 // List operation fetches a list of records from the service.
 func (s *service) List(ctx context.Context, options *ListOptions) ([]*model.Record, error) {
 	s.log.LogAttrs(ctx, slog.LevelDebug, "fetching records",
@@ -126,32 +113,6 @@ func (s *service) List(ctx context.Context, options *ListOptions) ([]*model.Reco
 	return s.list(txn, options)
 }
 
-// list executes the transaction on the database to fetch a list of records.
-func (s *service) list(txn *gorm.DB, options *ListOptions) ([]*model.Record, error) {
-	var payload []*model.Record
-
-	query := txn
-	if options.Limit > 0 {
-		query = query.Limit(options.Limit)
-	}
-	if options.Skip > 0 {
-		query = query.Offset(options.Skip)
-	}
-	if options.OrderBy != "" {
-		query = query.Order(options.OrderBy + " " + options.OrderDirection)
-	}
-	if options.Title != "" {
-		query = query.Where(&model.Record{
-			Title: options.Title,
-		})
-	}
-
-	if result := query.Find(&payload); result.Error != nil {
-		return nil, result.Error
-	}
-	return payload, nil
-}
-
 // Get operation fetches a record from the service.
 func (s *service) Get(ctx context.Context, ID uuid.UUID) (*model.Record, error) {
 	s.log.LogAttrs(ctx, slog.LevelDebug, "fetching a record",
@@ -174,18 +135,6 @@ func (s *service) Get(ctx context.Context, ID uuid.UUID) (*model.Record, error) 
 	}
 
 	return s.get(txn, ID)
-}
-
-// get executes the transaction on the database to fetch a record.
-func (s *service) get(txn *gorm.DB, ID uuid.UUID) (*model.Record, error) {
-	var payload model.Record
-	payload.ID = ID
-
-	result := txn.First(&payload)
-	if result.Error != nil {
-		return nil, result.Error
-	}
-	return &payload, nil
 }
 
 // Update operation updates a record in the service.
@@ -221,17 +170,6 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, options *UpdateOptio
 	return s.Get(ctx, id)
 }
 
-// update executes the transaction on the database to update a record.
-func (s *service) update(txn *gorm.DB, id uuid.UUID, options *UpdateOptions) error {
-	var payload model.Record
-	payload.ID = id
-
-	if result := txn.Model(&payload).Updates(options); result.Error != nil {
-		return result.Error
-	}
-	return nil
-}
-
 // Delete operation deletes a record from the service.
 func (s *service) Delete(ctx context.Context, ID uuid.UUID) error {
 	s.log.LogAttrs(ctx, slog.LevelDebug, "deleting a record",
@@ -254,19 +192,4 @@ func (s *service) Delete(ctx context.Context, ID uuid.UUID) error {
 	}
 
 	return s.delete(txn, ID)
-}
-
-// delete executes the transaction on the database to delete a record.
-func (s *service) delete(txn *gorm.DB, ID uuid.UUID) error {
-	var payload model.Record
-	payload.ID = ID
-
-	result := txn.Delete(&payload)
-	if result.Error != nil {
-		return result.Error
-	}
-	if result.RowsAffected == 0 {
-		return ErrNoRowsAffected
-	}
-	return nil
 }

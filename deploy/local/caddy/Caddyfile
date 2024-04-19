@@ -1,0 +1,15 @@
+{
+  debug
+  log {
+    output stdout
+  }
+
+  servers {
+    metrics
+  }
+
+}
+
+localhost:80 {
+  reverse_proxy /records/* host.docker.internal:8080
+}

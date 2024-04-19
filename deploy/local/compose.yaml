@@ -1,5 +1,7 @@
 volumes:
   data:
+  caddy_data:
+  caddy_config:
 
 networks:
   default:
@@ -7,11 +9,26 @@ networks:
 services:
 
   #
+  # Web Server, Reverse Proxy, Mesh
+  #
+
+  caddy:
+    image: caddy:2.7.6
+    restart: unless-stopped
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+
+  #
   # Storage services
   #
 
   postgres:
-    image: postgres:latest
+    image: postgres:16.2
     ports:
       - 5432:5432
     environment:
@@ -39,6 +56,10 @@ services:
       - PORT=/migrations
     networks:
       - default
+
+  #
+  # Monitoring services
+  #
 
   loki:
       image: grafana/loki:2.9.4

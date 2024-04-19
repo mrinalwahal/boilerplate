@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 
-	v1 "github.com/mrinalwahal/boilerplate/record/handlers/http/v1"
+	v1 "github.com/mrinalwahal/boilerplate/record/handlers/v1"
 	"github.com/mrinalwahal/boilerplate/record/service"
 )
 

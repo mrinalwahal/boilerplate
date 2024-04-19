@@ -21,10 +21,10 @@ import (
 // MockService is a mock of Service interface.
 type MockService struct {
 	ctrl     *gomock.Controller
-	recorder *MockServiceMockRecorder
+	organisationer *MockServiceMockRecorder
 }
 
-// MockServiceMockRecorder is the mock recorder for MockService.
+// MockServiceMockRecorder is the mock organisationer for MockService.
 type MockServiceMockRecorder struct {
 	mock *MockService
 }
@@ -32,13 +32,13 @@ type MockServiceMockRecorder struct {
 // NewMockService creates a new mock instance.
 func NewMockService(ctrl *gomock.Controller) *MockService {
 	mock := &MockService{ctrl: ctrl}
-	mock.recorder = &MockServiceMockRecorder{mock}
+	mock.organisationer = &MockServiceMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockService) EXPECT() *MockServiceMockRecorder {
-	return m.recorder
+	return m.organisationer
 }
 
 // Create mocks base method.

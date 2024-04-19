@@ -21,10 +21,10 @@ import (
 // MockDB is a mock of DB interface.
 type MockDB struct {
 	ctrl     *gomock.Controller
-	recorder *MockDBMockRecorder
+	organisationer *MockDBMockRecorder
 }
 
-// MockDBMockRecorder is the mock recorder for MockDB.
+// MockDBMockRecorder is the mock organisationer for MockDB.
 type MockDBMockRecorder struct {
 	mock *MockDB
 }
@@ -32,13 +32,13 @@ type MockDBMockRecorder struct {
 // NewMockDB creates a new mock instance.
 func NewMockDB(ctrl *gomock.Controller) *MockDB {
 	mock := &MockDB{ctrl: ctrl}
-	mock.recorder = &MockDBMockRecorder{mock}
+	mock.organisationer = &MockDBMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockDB) EXPECT() *MockDBMockRecorder {
-	return m.recorder
+	return m.organisationer
 }
 
 // Create mocks base method.

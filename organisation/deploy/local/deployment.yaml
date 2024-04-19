@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: organisations-deployment
+  labels:
+    app: organisations
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: organisations
+  template:
+    metadata:
+      labels:
+        app: organisations
+    spec:
+      containers:
+      - name: organisations
+        image: docker.io/library/org:local
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: organisations-service
+spec:
+  # type: LoadBalancer
+  selector:
+    app: organisations
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: http
+

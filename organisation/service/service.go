@@ -112,7 +112,7 @@ func (s *service) Update(ctx context.Context, ID uuid.UUID, options *UpdateOptio
 		slog.String("function", "update"),
 	)
 	if ID == uuid.Nil {
-		return nil, ErrInvalidRecordID
+		return nil, ErrInvalidorganisationID
 	}
 	if options == nil {
 		return nil, ErrInvalidOptions
@@ -130,7 +130,7 @@ func (s *service) Delete(ctx context.Context, ID uuid.UUID) error {
 		slog.String("function", "delete"),
 	)
 	if ID == uuid.Nil {
-		return ErrInvalidRecordID
+		return ErrInvalidorganisationID
 	}
 	return s.db.Delete(ctx, ID)
 }

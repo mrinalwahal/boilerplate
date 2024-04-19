@@ -12,8 +12,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/mrinalwahal/boilerplate/pkg/middleware"
-	"github.com/mrinalwahal/boilerplate/record/db"
-	v1 "github.com/mrinalwahal/boilerplate/record/handlers/http/v1"
+	v1 "github.com/mrinalwahal/boilerplate/record/handlers/v1"
 	"github.com/mrinalwahal/boilerplate/record/model"
 	"github.com/mrinalwahal/boilerplate/record/service"
 	"gorm.io/driver/sqlite"
@@ -57,14 +56,9 @@ func configure(t *testing.T) *testconfig {
 		}
 	})
 
-	// Initialize the database layer.
-	db := db.NewSQLDB(&db.SQLDBConfig{
-		DB: conn,
-	})
-
 	// Initialize the service.
 	service := service.NewService(&service.Config{
-		DB:     db,
+		DB:     conn,
 		Logger: slog.Default(),
 	})
 

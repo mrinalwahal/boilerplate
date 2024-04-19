@@ -278,7 +278,7 @@ func Test_Service_Update(t *testing.T) {
 		_, err := s.Update(context.Background(), uuid.Nil, &UpdateOptions{
 			Title: "Test Organisation",
 		})
-		if err == nil || err != ErrInvalidRecordID {
+		if err == nil || err != ErrInvalidorganisationID {
 			t.Errorf("service.Update() error = %v, wantErr %v", err, true)
 		}
 	})
@@ -354,7 +354,7 @@ func Test_Service_Delete(t *testing.T) {
 		config.db.EXPECT().Delete(gomock.Any(), gomock.Any()).Times(0)
 
 		err := s.Delete(context.Background(), uuid.Nil)
-		if err == nil || err != ErrInvalidRecordID {
+		if err == nil || err != ErrInvalidorganisationID {
 			t.Errorf("service.Delete() error = %v, wantErr %v", err, true)
 		}
 	})

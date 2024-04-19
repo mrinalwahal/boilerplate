@@ -7,10 +7,11 @@ import (
 	"os"
 	"time"
 
+	"github.com/mrinalwahal/boilerplate/organisation/cmd/main/router"
+	"github.com/mrinalwahal/boilerplate/organisation/config"
+	"github.com/mrinalwahal/boilerplate/organisation/db"
+	"github.com/mrinalwahal/boilerplate/organisation/service"
 	"github.com/mrinalwahal/boilerplate/pkg/middleware"
-	"github.com/mrinalwahal/boilerplate/record/cmd/main/router"
-	"github.com/mrinalwahal/boilerplate/record/config"
-	"github.com/mrinalwahal/boilerplate/record/service"
 	"gorm.io/gorm"
 
 	slogGorm "github.com/orandin/slog-gorm"
@@ -32,7 +33,7 @@ func main() {
 		Level:     level,
 	}))
 	logger = logger.
-		With("service", "record").
+		With("service", "organisation").
 		With("environment", config.Env)
 
 	//	Setup the gorm logger.
@@ -81,9 +82,14 @@ func main() {
 	// 	}, // user defined metrics
 	// }))
 
+	// Get the database layer.
+	db := db.NewSQLDB(&db.SQLDBConfig{
+		DB: conn,
+	})
+
 	// Get the service layer.
 	service := service.NewService(&service.Config{
-		DB:     conn,
+		DB:     db,
 		Logger: logger,
 	})
 
@@ -113,14 +119,14 @@ func main() {
 			Key: config.Authentication.Key.Key,
 			ExceptionalRoutes: []string{
 				"/login",
-				"/healthz",
+				"/records/healthz",
 			},
 		}),
 	)
 
 	// Prepare the base router.
 	// baseRouter := http.NewServeMux()
-	// baseRouter.Handle("/records/", http.StripPrefix("/records", router))
+	// baseRouter.Handle("/organisations/", http.StripPrefix("/organisations", router))
 
 	//	Configure and start the server.
 	server := http.Server{

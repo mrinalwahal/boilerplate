@@ -116,7 +116,7 @@ func (db *sqldb) List(ctx context.Context, options *ListOptions) ([]*model.Organ
 func (db *sqldb) Get(ctx context.Context, ID uuid.UUID) (*model.Organisation, error) {
 	txn := db.conn.WithContext(ctx)
 	if ID == uuid.Nil {
-		return nil, ErrInvalidRecordID
+		return nil, ErrInvalidorganisationID
 	}
 
 	// If the request context contains JWT claims, apply Row Level Security (RLS) checks.
@@ -142,7 +142,7 @@ func (db *sqldb) Get(ctx context.Context, ID uuid.UUID) (*model.Organisation, er
 func (db *sqldb) Update(ctx context.Context, id uuid.UUID, options *UpdateOptions) (*model.Organisation, error) {
 	txn := db.conn.WithContext(ctx)
 	if id == uuid.Nil {
-		return nil, ErrInvalidRecordID
+		return nil, ErrInvalidorganisationID
 	}
 	if options == nil {
 		return nil, ErrInvalidOptions
@@ -173,7 +173,7 @@ func (db *sqldb) Update(ctx context.Context, id uuid.UUID, options *UpdateOption
 func (db *sqldb) Delete(ctx context.Context, ID uuid.UUID) error {
 	txn := db.conn.WithContext(ctx)
 	if ID == uuid.Nil {
-		return ErrInvalidRecordID
+		return ErrInvalidorganisationID
 	}
 
 	// If the request context contains JWT claims, apply Row Level Security (RLS) checks.
