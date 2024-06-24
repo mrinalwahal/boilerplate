@@ -6,7 +6,7 @@ import (
 	"log/slog"
 
 	"github.com/google/uuid"
-	"github.com/mrinalwahal/boilerplate/organisation/db"
+	"github.com/mrinalwahal/boilerplate/organisation/db/organisation"
 	"github.com/mrinalwahal/boilerplate/organisation/model"
 )
 
@@ -23,8 +23,8 @@ type Service interface {
 
 type Config struct {
 
-	//	Database layer service.
-	DB db.DB
+	//	Database layer.
+	DB organisation.DB
 
 	//	Logger.
 	Logger *slog.Logger
@@ -54,7 +54,7 @@ func NewService(config *Config) Service {
 type service struct {
 
 	//	Database layer service.
-	db db.DB
+	db organisation.DB
 
 	//	Logger.
 	logger *slog.Logger
@@ -71,7 +71,7 @@ func (s *service) Create(ctx context.Context, options *CreateOptions) (*model.Or
 		return nil, err
 	}
 
-	return s.db.Create(ctx, &db.CreateOptions{
+	return s.db.Create(ctx, &organisation.CreateOptions{
 		Title:   options.Title,
 		OwnerID: options.OwnerID,
 	})
@@ -88,7 +88,7 @@ func (s *service) List(ctx context.Context, options *ListOptions) ([]*model.Orga
 		return nil, err
 	}
 
-	return s.db.List(ctx, &db.ListOptions{
+	return s.db.List(ctx, &organisation.ListOptions{
 		Title:          options.Title,
 		Skip:           options.Skip,
 		Limit:          options.Limit,
@@ -120,7 +120,7 @@ func (s *service) Update(ctx context.Context, ID uuid.UUID, options *UpdateOptio
 	if err := options.validate(); err != nil {
 		return nil, err
 	}
-	return s.db.Update(ctx, ID, &db.UpdateOptions{
+	return s.db.Update(ctx, ID, &organisation.UpdateOptions{
 		Title: options.Title,
 	})
 }

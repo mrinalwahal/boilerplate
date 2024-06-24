@@ -2,6 +2,14 @@
 
 This layer contains handlers which interact directly with the database. Typically, other layers of our service, including service layer and transport layer, would interact with the database through this layer if they need to.
 
+# Folder Structure
+
+- `scripts`: Contains helper scripts for dealing with database migrations
+- `migrations`: Contains database migrations.
+- `organisation`: Contains the service which performs transactions on the `organisations` table in the database.
+- `members`: Contains the service which performs transactions on the `members` table in the database.
+- `roles`: Contains the service which performs transactions on the `roles` table in the database.
+
 ## Migrations
 
 - To compare the models with database schema, add the models to `/scripts/loader.go`. This will help generate the migrations for your models.

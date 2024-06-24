@@ -16,7 +16,7 @@ spec:
             name: records-service
             port:
               number: 80
-      - path: /org
+      - path: /organisations
         pathType: Prefix
         backend:
           service:

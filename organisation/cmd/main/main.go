@@ -9,7 +9,7 @@ import (
 
 	"github.com/mrinalwahal/boilerplate/organisation/cmd/main/router"
 	"github.com/mrinalwahal/boilerplate/organisation/config"
-	"github.com/mrinalwahal/boilerplate/organisation/db"
+	"github.com/mrinalwahal/boilerplate/organisation/db/organisation"
 	"github.com/mrinalwahal/boilerplate/organisation/service"
 	"github.com/mrinalwahal/boilerplate/pkg/middleware"
 	"gorm.io/gorm"
@@ -83,8 +83,8 @@ func main() {
 	// }))
 
 	// Get the database layer.
-	db := db.NewSQLDB(&db.SQLDBConfig{
-		DB: conn,
+	db := organisation.NewDB(&organisation.DBConfig{
+		Conn: conn,
 	})
 
 	// Get the service layer.

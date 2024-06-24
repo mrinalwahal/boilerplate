@@ -1,4 +1,4 @@
-package db
+package organisation
 
 import (
 	"github.com/google/uuid"

@@ -1,4 +1,5 @@
-package db
+//go:generate mockgen -destination=db_mock.go -source=db.go -package=organisation
+package organisation
 
 import (
 	"context"
@@ -9,40 +10,48 @@ import (
 	"gorm.io/gorm"
 )
 
-type SQLDBConfig struct {
+type DB interface {
+	Create(context.Context, *CreateOptions) (*model.Organisation, error)
+	List(context.Context, *ListOptions) ([]*model.Organisation, error)
+	Get(context.Context, uuid.UUID) (*model.Organisation, error)
+	Update(context.Context, uuid.UUID, *UpdateOptions) (*model.Organisation, error)
+	Delete(context.Context, uuid.UUID) error
+}
+
+type DBConfig struct {
 
 	// Database connection.
 	// The connection should already be open.
 	//
 	// This field is mandatory.
-	DB *gorm.DB
+	Conn *gorm.DB
 }
 
-func NewSQLDB(config *SQLDBConfig) DB {
+func NewDB(config *DBConfig) DB {
 	if config == nil {
 		panic("db: nil config")
 	}
 
-	db := sqldb{
-		conn: config.DB,
+	db := db{
+		conn: config.Conn,
 	}
 
 	return &db
 }
 
-// sqldb is the database layer implementation of an SQL/Relational type database.
+// db is the db layer implementation of an SQL/Relational type db.
 //
 // For example, MySQL, PostgreSQL, SQLite, etc.
 //
 // It implements the DB interface.
-type sqldb struct {
+type db struct {
 
 	//	Database Connection
 	conn *gorm.DB
 }
 
 // Create operation creates a new organisation in the database.
-func (db *sqldb) Create(ctx context.Context, options *CreateOptions) (*model.Organisation, error) {
+func (db *db) Create(ctx context.Context, options *CreateOptions) (*model.Organisation, error) {
 	txn := db.conn.WithContext(ctx)
 	if options == nil {
 		return nil, ErrInvalidOptions
@@ -69,7 +78,7 @@ func (db *sqldb) Create(ctx context.Context, options *CreateOptions) (*model.Org
 }
 
 // List operation fetches a list of organisations from the database.
-func (db *sqldb) List(ctx context.Context, options *ListOptions) ([]*model.Organisation, error) {
+func (db *db) List(ctx context.Context, options *ListOptions) ([]*model.Organisation, error) {
 	txn := db.conn.WithContext(ctx)
 	if options == nil {
 		options = &ListOptions{}
@@ -113,7 +122,7 @@ func (db *sqldb) List(ctx context.Context, options *ListOptions) ([]*model.Organ
 }
 
 // Get operation fetches a organisation from the database.
-func (db *sqldb) Get(ctx context.Context, ID uuid.UUID) (*model.Organisation, error) {
+func (db *db) Get(ctx context.Context, ID uuid.UUID) (*model.Organisation, error) {
 	txn := db.conn.WithContext(ctx)
 	if ID == uuid.Nil {
 		return nil, ErrInvalidorganisationID
@@ -139,7 +148,7 @@ func (db *sqldb) Get(ctx context.Context, ID uuid.UUID) (*model.Organisation, er
 }
 
 // Update operation updates a organisation in the database.
-func (db *sqldb) Update(ctx context.Context, id uuid.UUID, options *UpdateOptions) (*model.Organisation, error) {
+func (db *db) Update(ctx context.Context, id uuid.UUID, options *UpdateOptions) (*model.Organisation, error) {
 	txn := db.conn.WithContext(ctx)
 	if id == uuid.Nil {
 		return nil, ErrInvalidorganisationID
@@ -170,7 +179,7 @@ func (db *sqldb) Update(ctx context.Context, id uuid.UUID, options *UpdateOption
 }
 
 // Delete operation deletes a organisation from the database.
-func (db *sqldb) Delete(ctx context.Context, ID uuid.UUID) error {
+func (db *db) Delete(ctx context.Context, ID uuid.UUID) error {
 	txn := db.conn.WithContext(ctx)
 	if ID == uuid.Nil {
 		return ErrInvalidorganisationID

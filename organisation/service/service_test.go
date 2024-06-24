@@ -6,16 +6,17 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/mrinalwahal/boilerplate/organisation/db"
+	"github.com/mrinalwahal/boilerplate/organisation/db/organisation"
 	"github.com/mrinalwahal/boilerplate/organisation/model"
-	"go.uber.org/mock/gomock"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 // Contains all the configuration required by our tests.
 type testconfig struct {
 
-	// Mock database layer.
-	db *db.MockDB
+	// Database layer.
+	db organisation.DB
 
 	// Test log.
 	log *slog.Logger
@@ -24,8 +25,35 @@ type testconfig struct {
 // Setup the test environment.
 func configure(t *testing.T) *testconfig {
 
-	// Get the mock database layer.
-	db := db.NewMockDB(gomock.NewController(t))
+	// Open an in-memory database connection with SQLite.
+	conn, err := gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("failed to open the database connection: %v", err)
+	}
+
+	// Migrate the schema.
+	if err := conn.AutoMigrate(&model.Organisation{}); err != nil {
+		t.Fatalf("failed to migrate the schema: %v", err)
+	}
+
+	// Cleanup the environment after the test is complete.
+	t.Cleanup(func() {
+
+		// Close the connection.
+		sqlDB, err := conn.DB()
+		if err != nil {
+			t.Fatalf("failed to get the database connection: %v", err)
+		}
+		if err := sqlDB.Close(); err != nil {
+			t.Fatalf("failed to close the database connection: %v", err)
+		}
+	})
+
+	// Get the database layer.
+	db := organisation.NewDB(&organisation.DBConfig{
+		Conn: conn,
+	})
+
 	return &testconfig{
 		db:  db,
 		log: slog.Default(),
@@ -48,12 +76,12 @@ func Test_NewService(t *testing.T) {
 
 	t.Run("valid config w/ db", func(t *testing.T) {
 
-		// Get the mock database layer.
-		db := db.NewMockDB(gomock.NewController(t))
+		// Setup the test config.
+		config := configure(t)
 
 		// Initialize the service.
 		s := NewService(&Config{
-			DB: db,
+			DB: config.db,
 		})
 
 		if s == nil {
@@ -63,13 +91,13 @@ func Test_NewService(t *testing.T) {
 
 	t.Run("valid config w/ db and logger", func(t *testing.T) {
 
-		// Get the mock database layer.
-		db := db.NewMockDB(gomock.NewController(t))
+		// Setup the test config.
+		config := configure(t)
 
 		// Initialize the service.
 		s := NewService(&Config{
-			DB:     db,
-			Logger: slog.Default(),
+			DB:     config.db,
+			Logger: config.log,
 		})
 
 		if s == nil {
@@ -92,7 +120,7 @@ func Test_Service_Create(t *testing.T) {
 	t.Run("create organisation with nil options", func(t *testing.T) {
 
 		// Make sure the database layer is not expecting a call.
-		config.db.EXPECT().Create(gomock.Any(), gomock.Any()).Times(0)
+		// config.db.EXPECT().Create(gomock.Any(), gomock.Any()).Times(0)
 
 		_, err := s.Create(context.Background(), nil)
 		if err == nil || err != ErrInvalidOptions {
@@ -103,7 +131,7 @@ func Test_Service_Create(t *testing.T) {
 	t.Run("create organisation with invalid options", func(t *testing.T) {
 
 		// Make sure the database layer is not expecting a call.
-		config.db.EXPECT().Create(gomock.Any(), gomock.Any()).Times(0)
+		// config.db.EXPECT().Create(gomock.Any(), gomock.Any()).Times(0)
 
 		_, err := s.Create(context.Background(), &CreateOptions{
 			Title: "",
@@ -120,12 +148,12 @@ func Test_Service_Create(t *testing.T) {
 		}
 
 		// Set the expectation at the database layer.
-		config.db.EXPECT().Create(gomock.Any(), gomock.Any()).Return(&model.Organisation{
-			Base: model.Base{
-				ID: uuid.New(),
-			},
-			Title: organisation.Title,
-		}, nil).Times(1)
+		// config.db.EXPECT().Create(gomock.Any(), gomock.Any()).Return(&model.Organisation{
+		// 	Base: model.Base{
+		// 		ID: uuid.New(),
+		// 	},
+		// 	Title: organisation.Title,
+		// }, nil).Times(1)
 
 		got, err := s.Create(context.Background(), &CreateOptions{
 			Title:   organisation.Title,
@@ -157,7 +185,7 @@ func Test_Service_List(t *testing.T) {
 	t.Run("list organisations with nil options", func(t *testing.T) {
 
 		// Make sure the database layer is not expecting a call.
-		config.db.EXPECT().List(gomock.Any(), gomock.Any()).Times(0)
+		// config.db.EXPECT().List(gomock.Any(), gomock.Any()).Times(0)
 
 		_, err := s.List(context.Background(), nil)
 		if err == nil || err != ErrInvalidOptions {
@@ -168,7 +196,7 @@ func Test_Service_List(t *testing.T) {
 	t.Run("list organisations with invalid options", func(t *testing.T) {
 
 		// Make sure the database layer is not expecting a call.
-		config.db.EXPECT().List(gomock.Any(), gomock.Any()).Times(0)
+		// config.db.EXPECT().List(gomock.Any(), gomock.Any()).Times(0)
 
 		_, err := s.List(context.Background(), &ListOptions{
 			Skip:  -1,
@@ -191,7 +219,7 @@ func Test_Service_List(t *testing.T) {
 		}
 
 		// Set the expectation at the database layer.
-		config.db.EXPECT().List(gomock.Any(), gomock.Any()).Return(organisations, nil).Times(1)
+		// config.db.EXPECT().List(gomock.Any(), gomock.Any()).Return(organisations, nil).Times(1)
 
 		got, err := s.List(context.Background(), &ListOptions{
 			Skip:  0,
@@ -223,7 +251,7 @@ func Test_Service_Get(t *testing.T) {
 	t.Run("get organisation with invalid ID", func(t *testing.T) {
 
 		// Make sure the database layer is not expecting a call.
-		config.db.EXPECT().Get(gomock.Any(), gomock.Any()).Times(0)
+		// config.db.EXPECT().Get(gomock.Any(), gomock.Any()).Times(0)
 
 		_, err := s.Get(context.Background(), uuid.Nil)
 		if err == nil || err != ErrInvalidOptions {
@@ -241,7 +269,7 @@ func Test_Service_Get(t *testing.T) {
 		}
 
 		// Set the expectation at the database layer.
-		config.db.EXPECT().Get(gomock.Any(), id).Return(&organisation, nil).Times(1)
+		// config.db.EXPECT().Get(gomock.Any(), id).Return(&organisation, nil).Times(1)
 
 		got, err := s.Get(context.Background(), id)
 		if err != nil {
@@ -273,7 +301,7 @@ func Test_Service_Update(t *testing.T) {
 	t.Run("update organisation with invalid ID", func(t *testing.T) {
 
 		// Make sure the database layer is not expecting a call.
-		config.db.EXPECT().Update(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+		// config.db.EXPECT().Update(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
 
 		_, err := s.Update(context.Background(), uuid.Nil, &UpdateOptions{
 			Title: "Test Organisation",
@@ -286,7 +314,7 @@ func Test_Service_Update(t *testing.T) {
 	t.Run("update organisation with nil options", func(t *testing.T) {
 
 		// Make sure the database layer is not expecting a call.
-		config.db.EXPECT().Update(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+		// config.db.EXPECT().Update(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
 
 		_, err := s.Update(context.Background(), id, nil)
 		if err == nil || err != ErrInvalidOptions {
@@ -297,7 +325,7 @@ func Test_Service_Update(t *testing.T) {
 	t.Run("update organisation with invalid options", func(t *testing.T) {
 
 		// Make sure the database layer is not expecting a call.
-		config.db.EXPECT().Update(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+		// config.db.EXPECT().Update(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
 
 		_, err := s.Update(context.Background(), id, &UpdateOptions{
 			Title: "",
@@ -317,7 +345,7 @@ func Test_Service_Update(t *testing.T) {
 		}
 
 		// Set the expectation at the database layer.
-		config.db.EXPECT().Update(gomock.Any(), id, gomock.Any()).Return(&organisation, nil).Times(1)
+		// config.db.EXPECT().Update(gomock.Any(), id, gomock.Any()).Return(&organisation, nil).Times(1)
 
 		got, err := s.Update(context.Background(), id, &UpdateOptions{
 			Title: "Updated Organisation",
@@ -351,7 +379,7 @@ func Test_Service_Delete(t *testing.T) {
 	t.Run("delete organisation with invalid ID", func(t *testing.T) {
 
 		// Make sure the database layer is not expecting a call.
-		config.db.EXPECT().Delete(gomock.Any(), gomock.Any()).Times(0)
+		// config.db.EXPECT().Delete(gomock.Any(), gomock.Any()).Times(0)
 
 		err := s.Delete(context.Background(), uuid.Nil)
 		if err == nil || err != ErrInvalidorganisationID {
@@ -362,7 +390,7 @@ func Test_Service_Delete(t *testing.T) {
 	t.Run("delete organisation with valid ID", func(t *testing.T) {
 
 		// Set the expectation at the database layer.
-		config.db.EXPECT().Delete(gomock.Any(), id).Return(nil).Times(1)
+		// config.db.EXPECT().Delete(gomock.Any(), id).Return(nil).Times(1)
 
 		err := s.Delete(context.Background(), id)
 		if err != nil {
